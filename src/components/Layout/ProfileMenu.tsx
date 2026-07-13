@@ -8,6 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useFlashcardStore, getRecentSessionIds } from '../../context/FlashcardContext'
 import { deleteSessionFromSupabase } from '../../lib/sessions'
 import { levelFromXp } from '../../lib/leveling'
+import { profileAvatarUrl } from '../../lib/avatars'
 import ConfirmDialog from './ConfirmDialog'
 import type { SessionRow } from '../../lib/supabase'
 
@@ -44,6 +45,7 @@ const ProfileMenu: React.FC = () => {
   if (!user) return null
 
   const initial = (profile?.name || user.name || 'U').charAt(0).toUpperCase()
+  const avatar = profileAvatarUrl(profile?.avatar, profile?.name || user.name || user.email)
   const xp = profile?.xp ?? 0
   const { level, intoLevel, levelSpan, progressPct } = levelFromXp(xp)
   const streak = profile?.study_streak ?? 0
@@ -75,8 +77,13 @@ const ProfileMenu: React.FC = () => {
         onClick={() => { setOpen((o) => !o); setShowSessions(false) }}
         className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full border border-paper-sunken dark:border-[#33465c] hover:bg-paper-sunken dark:hover:bg-[#111d2a] hover:shadow-soft transition-all"
       >
-        <span className="w-8 h-8 rounded-full bg-ember-500 flex items-center justify-center text-paper text-sm font-semibold">
-          {initial}
+        <span className="w-8 h-8 rounded-full bg-paper-sunken dark:bg-sepia-800 flex items-center justify-center text-paper text-sm font-semibold overflow-hidden ring-1 ring-paper-sunken dark:ring-[#33465c]">
+          <img
+            src={avatar}
+            alt={profile?.name || user.name}
+            className="w-full h-full object-cover"
+            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          />
         </span>
         <span className="hidden lg:block text-sm font-medium text-ink-soft dark:text-sepia-200 max-w-[120px] truncate">
           {profile?.name || user.name}
@@ -96,8 +103,13 @@ const ProfileMenu: React.FC = () => {
             {/* Header */}
             <div className="px-4 py-4 bg-paper-sunken dark:bg-[#243547] border-b border-paper-sunken dark:border-[#33465c] text-ink dark:text-sepia-100">
               <div className="flex items-center gap-3">
-                <span className="w-11 h-11 rounded-full bg-ember-500 flex items-center justify-center text-paper text-lg font-bold">
-                  {initial}
+                <span className="w-11 h-11 rounded-full bg-paper-sunken dark:bg-sepia-800 flex items-center justify-center text-paper text-lg font-bold overflow-hidden ring-1 ring-paper-sunken dark:ring-[#33465c]">
+                  <img
+                    src={avatar}
+                    alt={profile?.name || user.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                  />
                 </span>
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{profile?.name || user.name}</p>

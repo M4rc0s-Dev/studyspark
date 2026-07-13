@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { User } from '@supabase/supabase-js'
 import { supabase, Profile } from '../lib/supabase'
 import { SessionRow } from '../lib/supabase'
+import { randomAvatarSeed } from '../lib/avatars'
 
 interface AuthUser {
   id: string
@@ -14,11 +15,12 @@ interface AuthContextValue {
   profile: Profile | null
   sessions: SessionRow[]
   loading: boolean
-  signUp: (email: string, password: string, name?: string) => Promise<{ needsConfirmation: boolean }>
+  signUp: (email: string, password: string, name?: string, avatar?: string) => Promise<{ needsConfirmation: boolean }>
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   refreshSessions: () => Promise<void>
   addXp: (amount: number) => Promise<void>
+  updateAvatar: (avatar: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -38,13 +40,16 @@ function toAuthUser(user: User, profile: Profile | null): AuthUser {
 
 // If a profile row is missing (e.g. it was deleted), recreate it on login so
 // the user never loses their account link. Uses the owner-only insert policy.
-async function ensureProfile(user: User): Promise<Profile | null> {
+// `avatar` (optional) is only set when creating a fresh profile; an existing
+// one keeps whatever avatar it already has (we never overwrite on the server).
+async function ensureProfile(user: User, avatar?: string): Promise<Profile | null> {
   if (!supabase) return null
   const meta = (user.user_metadata || {}) as { name?: string }
+  const seed = avatar || (user.user_metadata?.avatar as string) || randomAvatarSeed()
   const { data, error } = await supabase
     .from('profiles')
     .upsert(
-      { id: user.id, email: user.email ?? '', name: meta.name ?? '' },
+      { id: user.id, email: user.email ?? '', name: meta.name ?? '', avatar: seed },
       { onConflict: 'id' },
     )
     .select('*')
@@ -137,24 +142,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [loadProfile])
 
   const signUp = useCallback(
-    async (email: string, password: string, name?: string) => {
+    async (email: string, password: string, name?: string, avatar?: string) => {
       if (!supabase) throw new Error('Auth no disponible')
+      const seed = avatar || randomAvatarSeed()
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { name: name || '' } },
+        options: { data: { name: name || '', avatar: seed } },
       })
       if (error) throw error
       // If email confirmation is enabled, data.session is null until confirmed.
       const needsConfirmation = !data.session
       if (data.user && !needsConfirmation) {
-        const prof = await ensureProfile(data.user)
+        const prof = await ensureProfile(data.user, seed)
         setProfile(prof)
         setUser(toAuthUser(data.user, prof))
       }
       return { needsConfirmation }
     },
     []
+  )
+
+  const updateAvatar = useCallback(
+    async (avatar: string) => {
+      if (!supabase || !user) return
+      const { data, error } = await supabase
+        .from('profiles')
+        .update({ avatar })
+        .eq('id', user.id)
+        .select('*')
+        .maybeSingle()
+      if (!error && data) setProfile(data as Profile)
+    },
+    [user]
   )
 
   const signIn = useCallback(
@@ -210,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, sessions, loading, signUp, signIn, signOut, refreshSessions, addXp }}
+      value={{ user, profile, sessions, loading, signUp, signIn, signOut, refreshSessions, addXp, updateAvatar }}
     >
       {children}
     </AuthContext.Provider>

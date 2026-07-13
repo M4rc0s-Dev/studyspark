@@ -13,6 +13,7 @@ import { saveSessionToSupabase } from '../lib/sessions'
 import { StudySession } from '../types'
 import type { SessionConfig } from '../context/SettingsContext'
 import { FileText, Wand2, Brain, Sparkles, Zap, Layers, Trophy, ArrowRight, Star, Quote } from 'lucide-react'
+import { avatarUrl } from '../lib/avatars'
 
 const fade = {
   hidden: { opacity: 0, y: 24 },
@@ -125,9 +126,9 @@ const HomePage: React.FC = () => {
   ]
 
   const testimonials = [
-    { name: 'Lucía M.', role: 'Medicina', text: 'Hice 200 tarjetas de anatomía en una tarde. Aprobé.', initial: 'L', avatar: 'https://i.pravatar.cc/160?img=47', rating: 5 },
-    { name: 'Carlos R.', role: 'Ingeniería', text: 'La repetición espaciada me salvó la carrera. Clarísimo.', initial: 'C', avatar: 'https://i.pravatar.cc/160?img=12', rating: 5 },
-    { name: 'Marta G.', role: 'Oposiciones', text: 'Subí mis temas y salieron flashcards perfectas.', initial: 'M', avatar: 'https://i.pravatar.cc/160?img=32', rating: 4 },
+    { name: 'Lucía M.', role: 'Medicina', text: 'Hice 200 tarjetas de anatomía en una tarde. Aprobé.', initial: 'L', avatar: avatarUrl('Lucia-M', 'shapes'), rating: 5 },
+    { name: 'Carlos R.', role: 'Ingeniería', text: 'La repetición espaciada me salvó la carrera. Clarísimo.', initial: 'C', avatar: avatarUrl('Carlos-R', 'ring'), rating: 5 },
+    { name: 'Marta G.', role: 'Oposiciones', text: 'Subí mis temas y salieron flashcards perfectas.', initial: 'M', avatar: avatarUrl('Marta-G', 'bauhaus'), rating: 4 },
   ]
 
   const stats = [

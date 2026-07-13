@@ -23,6 +23,7 @@ export interface Profile {
   id: string
   email: string | null
   name: string | null
+  avatar: string | null
   is_premium: boolean
   xp: number
   study_streak: number
