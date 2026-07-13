@@ -4,7 +4,6 @@ dist-ssr
 *.local
 .env
 .env.*
-!.env.example
 
 # editor / OS
 .vscode/*
@@ -16,7 +15,7 @@ dist-ssr
 
 # ───────────────────────────────────────────────────────────────
 # PERSONAL / LOCAL FILES  (yours, NOT part of the project)
-# Everything in personal/ is gitignored: your secrets, local
+# Everything in _personal/ is gitignored: your secrets, local
 # LiteLLM proxy config and private notes live there. The project
 # stays reproducible via the committed templates
 # config.example.yaml and .env.example instead.
@@ -25,4 +24,4 @@ dist-ssr
 # points at your localhost LiteLLM) — also excluded.
 # ───────────────────────────────────────────────────────────────
 .claude/
-personal/
+_personal/
