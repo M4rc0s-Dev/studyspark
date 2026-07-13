@@ -19,8 +19,8 @@ body {
 }
 
 .dark body {
-  color: #e2e8f0;
-  background: #141e29;
+  color: #e0e9f2;
+  background: #0b1220;
 }
 
 .app {
@@ -54,7 +54,7 @@ body {
 }
 
 .dark ::-webkit-scrollbar-track {
-  background: #16202e;
+  background: #0b1220;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -63,7 +63,7 @@ body {
 }
 
 .dark ::-webkit-scrollbar-thumb {
-  background: #3f5169;
+  background: #455b76;
 }
 
 ::-webkit-scrollbar-thumb:hover {

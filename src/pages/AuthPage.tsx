@@ -85,7 +85,7 @@ const AuthPage: React.FC = () => {
               <MailCheck className="w-8 h-8" />
             </motion.div>
             <h1 className="font-display text-2xl font-bold text-ink dark:text-sepia-50">{t('auth.checkmail')}</h1>
-            <p className="text-ink-muted dark:text-sepia-400 text-sm mt-2">
+            <p className="text-ink-muted dark:text-sepia-300 text-sm mt-2">
               {t('auth.checkmail.desc')} <span className="font-semibold text-ink-soft dark:text-sepia-200">{confirmEmail}</span>
             </p>
 
@@ -98,7 +98,7 @@ const AuthPage: React.FC = () => {
               <Mail className="w-5 h-5" /> {t('auth.checkmail.open')}
             </a>
 
-            <p className="text-xs text-ink-muted dark:text-sepia-500 mt-5">{t('auth.checkmail.note')}</p>
+            <p className="text-xs text-ink-muted dark:text-sepia-300 mt-5">{t('auth.checkmail.note')}</p>
 
             <button
               onClick={handleResend}
@@ -130,7 +130,7 @@ const AuthPage: React.FC = () => {
             <h1 className="font-display text-2xl font-bold text-ink dark:text-sepia-50">
               {mode === 'login' ? t('auth.login') : t('auth.register')}
             </h1>
-            <p className="text-ink-muted dark:text-sepia-400 text-sm mt-1">
+            <p className="text-ink-muted dark:text-sepia-300 text-sm mt-1">
               {mode === 'login' ? t('auth.login.desc') : t('auth.register.desc')}
             </p>
           </div>
@@ -144,7 +144,7 @@ const AuthPage: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t('auth.name')}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-400 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-300 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
                 />
               </div>
             )}
@@ -156,7 +156,7 @@ const AuthPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t('auth.email')}
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-400 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-300 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
               />
             </div>
             <div className="relative">
@@ -167,7 +167,7 @@ const AuthPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder={t('auth.password')}
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-400 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-300 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
               />
             </div>
             <button
@@ -185,7 +185,7 @@ const AuthPage: React.FC = () => {
             </button>
           </form>
 
-          <p className="text-center text-sm text-ink-muted dark:text-sepia-400 mt-6">
+          <p className="text-center text-sm text-ink-muted dark:text-sepia-300 mt-6">
             {mode === 'login' ? t('auth.noaccount') : t('auth.hasaccount')}{' '}
             <button
               onClick={() => setMode(mode === 'login' ? 'register' : 'login')}

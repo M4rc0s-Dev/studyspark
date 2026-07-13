@@ -25,9 +25,9 @@ const Layout: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-paper dark:bg-[#141e29] dark:text-sepia-100 flex flex-col transition-colors">
+    <div className="min-h-screen bg-paper dark:bg-[#0b1220] dark:text-sepia-100 flex flex-col transition-colors">
       {/* Top navbar */}
-      <header className="sticky top-0 z-50 bg-paper/85 dark:bg-[#141e29]/85 backdrop-blur-md border-b border-slate-200/70 dark:border-sepia-800/70">
+      <header className="sticky top-0 z-50 bg-paper/85 dark:bg-[#0b1220]/85 backdrop-blur-md border-b border-slate-200/70 dark:border-sepia-800/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
@@ -110,7 +110,7 @@ const Layout: React.FC = () => {
       {/* Mobile menu */}
       {isSidebarOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-ink/40 dark:bg-sepia-900/50" onClick={() => setIsSidebarOpen(false)}>
-          <div className="absolute right-0 top-16 w-64 h-full bg-paper dark:bg-[#141e29] shadow-xl p-4 border-l border-slate-200 dark:border-sepia-800" onClick={(e) => e.stopPropagation()}>
+          <div className="absolute right-0 top-16 w-64 h-full bg-paper dark:bg-[#0b1220] shadow-xl p-4 border-l border-slate-200 dark:border-sepia-800" onClick={(e) => e.stopPropagation()}>
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = location.pathname === item.href
@@ -177,7 +177,7 @@ const Layout: React.FC = () => {
       <Chatbot />
 
       {/* Footer */}
-      <footer className="bg-paper-sunken dark:bg-[#141e29] border-t border-slate-200 dark:border-sepia-800 mt-16 transition-colors">
+      <footer className="bg-paper-sunken dark:bg-[#0b1220] border-t border-slate-200 dark:border-sepia-800 mt-16 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
@@ -186,10 +186,10 @@ const Layout: React.FC = () => {
               </span>
               <span className="font-display font-bold text-ink dark:text-sepia-50">StudySpark</span>
             </div>
-            <p className="text-sm text-ink-muted dark:text-sepia-400">
+            <p className="text-sm text-ink-muted dark:text-sepia-300">
               © {new Date().getFullYear()} StudySpark. {t('footer.copy')}
             </p>
-            <div className="flex gap-6 text-sm text-ink-muted dark:text-sepia-400">
+            <div className="flex gap-6 text-sm text-ink-muted dark:text-sepia-300">
               <Link to="/contact" className="hover:text-ember-600 dark:hover:text-ember-400 transition-colors">{t('footer.privacy')}</Link>
               <Link to="/contact" className="hover:text-ember-600 dark:hover:text-ember-400 transition-colors">{t('footer.terms')}</Link>
               <Link to="/contact" className="hover:text-ember-600 dark:hover:text-ember-400 transition-colors">{t('footer.contact')}</Link>

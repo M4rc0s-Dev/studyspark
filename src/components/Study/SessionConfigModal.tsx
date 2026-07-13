@@ -66,13 +66,13 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', stiffness: 260, damping: 22 }}
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-paper-raised dark:bg-[#1c2836] rounded-3xl shadow-lift overflow-hidden"
+            className="w-full max-w-lg bg-paper-raised dark:bg-[#1e2c3c] rounded-3xl shadow-lift overflow-hidden"
           >
             {/* Header */}
-            <div className="relative px-6 pt-6 pb-5 bg-paper-sunken dark:bg-[#1a2531] text-ink dark:text-sepia-100 border-b border-paper-sunken dark:border-[#33445a]">
+            <div className="relative px-6 pt-6 pb-5 bg-paper-sunken dark:bg-[#243547] text-ink dark:text-sepia-100 border-b border-paper-sunken dark:border-[#33465c]">
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 text-ink-muted dark:text-sepia-400 hover:text-ink dark:hover:text-sepia-100 transition-colors"
+                className="absolute top-4 right-4 text-ink-muted dark:text-sepia-300 hover:text-ink dark:hover:text-sepia-100 transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="w-5 h-5" />
@@ -98,7 +98,7 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
                         className={`relative text-left rounded-2xl border-2 p-4 transition-all ${
                           active
                             ? 'border-ember-500 bg-ember-50 dark:bg-ember-500/15 shadow-soft'
-                            : 'border-paper-sunken dark:border-[#33445a] hover:border-ember-300 hover:bg-ember-50/40 dark:hover:bg-ember-500/5'
+                            : 'border-paper-sunken dark:border-[#33465c] hover:border-ember-300 hover:bg-ember-50/40 dark:hover:bg-ember-500/5'
                         }`}
                       >
                         <span
@@ -107,7 +107,7 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
                           <Icon className="w-5 h-5" />
                         </span>
                         <p className="mt-2 font-semibold text-ink dark:text-sepia-100 text-sm">{t(m.key as any)}</p>
-                        <p className="text-xs text-ink-muted dark:text-sepia-400 mt-1 leading-snug">{t(m.descKey as any)}</p>
+                        <p className="text-xs text-ink-muted dark:text-sepia-300 mt-1 leading-snug">{t(m.descKey as any)}</p>
                       </button>
                     )
                   })}
@@ -128,7 +128,7 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
                         className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-all ${
                           active
                             ? 'border-ember-500 bg-ember-50 dark:bg-ember-500/15'
-                            : 'border-paper-sunken dark:border-[#33445a] hover:border-ember-300'
+                            : 'border-paper-sunken dark:border-[#33465c] hover:border-ember-300'
                         }`}
                       >
                         <Icon className={`w-5 h-5 ${active ? 'text-ember-600 dark:text-ember-400' : 'text-ink-muted'}`} />
@@ -155,7 +155,7 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
                         className={`flex items-center justify-center gap-2 rounded-xl border-2 p-3 transition-all ${
                           active
                             ? 'border-ember-500 bg-ember-50 dark:bg-ember-500/15'
-                            : 'border-paper-sunken dark:border-[#33445a] hover:border-ember-300'
+                            : 'border-paper-sunken dark:border-[#33465c] hover:border-ember-300'
                         }`}
                       >
                         <Icon className={`w-4 h-4 ${active ? 'text-ember-600 dark:text-ember-400' : 'text-ink-muted'}`} />
@@ -167,7 +167,7 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
               </div>
 
               {/* Autoplay */}
-              <label className="flex items-center justify-between gap-3 rounded-xl border border-paper-sunken dark:border-[#33445a] p-3 cursor-pointer hover:bg-paper-sunken dark:hover:bg-[#16202e] transition-colors">
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-paper-sunken dark:border-[#33465c] p-3 cursor-pointer hover:bg-paper-sunken dark:hover:bg-[#111d2a] transition-colors">
                 <span className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-ember-500" />
                   <span className="text-sm font-medium text-ink-soft dark:text-sepia-200">{t('config.autoplay')}</span>
@@ -182,10 +182,10 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 border-t border-paper-sunken dark:border-[#33445a] flex items-center gap-3 bg-paper-sunken dark:bg-[#16202e]">
+            <div className="px-6 py-4 border-t border-paper-sunken dark:border-[#33465c] flex items-center gap-3 bg-paper-sunken dark:bg-[#111d2a]">
               <button
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-xl border border-[#cbd5e1] dark:border-[#3f5169] dark:text-sepia-200 font-medium hover:bg-[#e2e8f0] dark:hover:bg-[#33445a] transition-colors"
+                className="px-5 py-2.5 rounded-xl border border-[#cbd5e1] dark:border-[#455b76] dark:text-sepia-200 font-medium hover:bg-[#e2e8f0] dark:hover:bg-[#33465c] transition-colors"
               >
                 {t('config.cancel')}
               </button>

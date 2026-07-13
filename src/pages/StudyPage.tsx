@@ -537,7 +537,7 @@ const StudyPage: React.FC = () => {
             <BookOpen className="w-8 h-8" />
           </div>
           <h1 className="font-display text-2xl font-bold text-ink dark:text-sepia-50 mb-3">{t('study.empty.title')}</h1>
-          <p className="text-ink-muted dark:text-sepia-400 mb-8">{t('study.empty.desc')}</p>
+          <p className="text-ink-muted dark:text-sepia-300 mb-8">{t('study.empty.desc')}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => navigate('/')}
@@ -597,7 +597,7 @@ const StudyPage: React.FC = () => {
             <Trophy className="w-10 h-10" />
           </motion.div>
           <h1 className="mt-6 font-display text-3xl font-bold text-ink dark:text-sepia-50">{t('reward.title')}</h1>
-          <p className="mt-2 text-ink-muted dark:text-sepia-400">
+          <p className="mt-2 text-ink-muted dark:text-sepia-300">
             {t('reward.subtitle')} <span className="font-semibold text-ink dark:text-sepia-100">{flashcards.length}</span> {t('reward.cards')}
             {' · '}
             <span className="font-semibold text-emerald-600">{correctCount}</span> {t('reward.known')}
@@ -620,7 +620,7 @@ const StudyPage: React.FC = () => {
             </div>
             <div className="bg-slate-100 dark:bg-sepia-800 rounded-2xl p-4">
               <p className="text-2xl font-bold text-ink dark:text-sepia-100 tabular-nums">{elapsedTime}s</p>
-              <p className="text-xs text-ink-muted dark:text-sepia-400 mt-1">{t('reward.time')}</p>
+              <p className="text-xs text-ink-muted dark:text-sepia-300 mt-1">{t('reward.time')}</p>
             </div>
           </div>
 
@@ -634,7 +634,7 @@ const StudyPage: React.FC = () => {
             >
               <Coffee className="w-5 h-5" /> {t('support.kofi')}
             </a>
-            <p className="mt-2 text-sm text-ink-muted dark:text-sepia-400">{t('support.thanks')}</p>
+            <p className="mt-2 text-sm text-ink-muted dark:text-sepia-300">{t('support.thanks')}</p>
           </div>
 
           {user ? (
@@ -647,7 +647,7 @@ const StudyPage: React.FC = () => {
               </span>
             </div>
           ) : (
-            <p className="mt-6 text-sm text-ink-muted dark:text-sepia-400">{t('auth.login.desc')}</p>
+            <p className="mt-6 text-sm text-ink-muted dark:text-sepia-300">{t('auth.login.desc')}</p>
           )}
 
           {/* Save to a folder — only offered when the deck is NOT yet saved (point 2) */}
@@ -713,7 +713,7 @@ const StudyPage: React.FC = () => {
                       {wrongCards.map((c) => (
                         <div key={c.id} className="text-left bg-paper-sunken dark:bg-sepia-800 rounded-xl p-3 border border-slate-200 dark:border-sepia-700">
                           <p className="text-sm font-semibold text-ink dark:text-sepia-100">{c.question}</p>
-                          <p className="text-sm text-ink-muted dark:text-sepia-400 mt-1">{c.answer}</p>
+                          <p className="text-sm text-ink-muted dark:text-sepia-300 mt-1">{c.answer}</p>
                         </div>
                       ))}
                     </div>
@@ -768,7 +768,7 @@ const StudyPage: React.FC = () => {
               </span>
               <div>
                 <h1 className="font-display text-2xl font-bold text-ink dark:text-sepia-50 leading-tight">{currentSession.title}</h1>
-                <p className="text-ink-muted dark:text-sepia-400">
+                <p className="text-ink-muted dark:text-sepia-300">
                   {t('study.card')} {currentCardIndex + 1} {t('study.of')} {flashcards.length}
                   {unansweredCount > 0 && (
                     <span className="ml-2 text-xs text-ember-600 dark:text-ember-400">· {t('reward.unanswered', { count: unansweredCount })}</span>
@@ -842,7 +842,7 @@ const StudyPage: React.FC = () => {
         </div>
 
         {/* Flip hint */}
-        <p className="text-center text-sm text-ink-muted dark:text-sepia-400 mb-4">
+        <p className="text-center text-sm text-ink-muted dark:text-sepia-300 mb-4">
           {showAnswer ? '' : t('study.flip.hint')}
         </p>
 

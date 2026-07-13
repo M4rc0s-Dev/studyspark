@@ -14,7 +14,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="flex justify-between text-xs text-ink-muted dark:text-sepia-400 mt-1.5 font-medium">
+      <div className="flex justify-between text-xs text-ink-muted dark:text-sepia-300 mt-1.5 font-medium">
         <span>0%</span>
         <span>{pct < 10 ? '0' : pct < 100 ? Math.floor(pct) : '100'}%</span>
       </div>

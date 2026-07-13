@@ -73,7 +73,7 @@ const ProfileMenu: React.FC = () => {
     <div className="relative" ref={ref}>
       <button
         onClick={() => { setOpen((o) => !o); setShowSessions(false) }}
-        className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full border border-paper-sunken dark:border-[#33445a] hover:bg-paper-sunken dark:hover:bg-[#16202e] hover:shadow-soft transition-all"
+        className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full border border-paper-sunken dark:border-[#33465c] hover:bg-paper-sunken dark:hover:bg-[#111d2a] hover:shadow-soft transition-all"
       >
         <span className="w-8 h-8 rounded-full bg-ember-500 flex items-center justify-center text-paper text-sm font-semibold">
           {initial}
@@ -91,33 +91,33 @@ const ProfileMenu: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.16 }}
-            className="absolute right-0 mt-2 w-72 bg-paper-raised dark:bg-[#1c2836] rounded-2xl shadow-lift border border-paper-sunken dark:border-[#33445a] overflow-hidden z-50"
+            className="absolute right-0 mt-2 w-72 bg-paper-raised dark:bg-[#1e2c3c] rounded-2xl shadow-lift border border-paper-sunken dark:border-[#33465c] overflow-hidden z-50"
           >
             {/* Header */}
-            <div className="px-4 py-4 bg-paper-sunken dark:bg-[#1a2531] border-b border-paper-sunken dark:border-[#33445a] text-ink dark:text-sepia-100">
+            <div className="px-4 py-4 bg-paper-sunken dark:bg-[#243547] border-b border-paper-sunken dark:border-[#33465c] text-ink dark:text-sepia-100">
               <div className="flex items-center gap-3">
                 <span className="w-11 h-11 rounded-full bg-ember-500 flex items-center justify-center text-paper text-lg font-bold">
                   {initial}
                 </span>
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{profile?.name || user.name}</p>
-                  <p className="text-xs text-ink-muted dark:text-sepia-400 truncate">{user.email}</p>
+                  <p className="text-xs text-ink-muted dark:text-sepia-300 truncate">{user.email}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="rounded-xl bg-paper-raised dark:bg-[#1c2836] px-3 py-2">
-                  <p className="text-[11px] text-ink-muted dark:text-sepia-400">{t('profile.streak')}</p>
+                <div className="rounded-xl bg-paper-raised dark:bg-[#1e2c3c] px-3 py-2">
+                  <p className="text-[11px] text-ink-muted dark:text-sepia-300">{t('profile.streak')}</p>
                   <p className="text-sm font-semibold flex items-center gap-1">
                     {streakActive ? (
                       <Flame className="w-3.5 h-3.5 text-orange-300" />
                     ) : (
-                      <Flame className="w-3.5 h-3.5 text-ink-muted dark:text-sepia-500" />
+                      <Flame className="w-3.5 h-3.5 text-ink-muted dark:text-sepia-300" />
                     )}{' '}
                     {streak} {t('profile.days')}
                   </p>
                 </div>
-                <div className="rounded-xl bg-paper-raised dark:bg-[#1c2836] px-3 py-2">
-                  <p className="text-[11px] text-ink-muted dark:text-sepia-400">{t('reward.level', { level })}</p>
+                <div className="rounded-xl bg-paper-raised dark:bg-[#1e2c3c] px-3 py-2">
+                  <p className="text-[11px] text-ink-muted dark:text-sepia-300">{t('reward.level', { level })}</p>
                   <p className="text-sm font-semibold flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5" /> {xp} {t('profile.xp')}
                   </p>
@@ -142,17 +142,17 @@ const ProfileMenu: React.FC = () => {
               <div className="p-2">
                 <button
                   onClick={() => setShowSessions(true)}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#16202e] transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#111d2a] transition-colors text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-ember-50 dark:bg-ember-500/15 flex items-center justify-center shrink-0">
                     <Layers className="w-4 h-4 text-ember-500" />
                   </span>
                   <span className="text-sm font-medium text-ink-soft dark:text-sepia-200 flex-1">{t('profile.recentsessions')}</span>
-                  <span className="text-xs text-ink-muted bg-paper-sunken dark:bg-[#16202e] rounded-full px-2 py-0.5">{sessions.length}</span>
+                  <span className="text-xs text-ink-muted bg-paper-sunken dark:bg-[#111d2a] rounded-full px-2 py-0.5">{sessions.length}</span>
                 </button>
                 <button
                   onClick={() => { setOpen(false); navigate('/library') }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#16202e] transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#111d2a] transition-colors text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-ember-50 dark:bg-ember-500/15 flex items-center justify-center shrink-0">
                     <LibraryIcon className="w-4 h-4 text-ember-500" />
@@ -161,14 +161,14 @@ const ProfileMenu: React.FC = () => {
                 </button>
                 <button
                   onClick={() => { setOpen(false); navigate('/settings') }}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#16202e] transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#111d2a] transition-colors text-left"
                 >
                   <span className="w-8 h-8 rounded-lg bg-ember-50 dark:bg-ember-500/15 flex items-center justify-center shrink-0">
                     <Zap className="w-4 h-4 text-ember-500" />
                   </span>
                   <span className="text-sm font-medium text-ink-soft dark:text-sepia-200">{t('profile.settings')}</span>
                 </button>
-                <div className="my-1 border-t border-paper-sunken dark:border-[#33445a]" />
+                <div className="my-1 border-t border-paper-sunken dark:border-[#33465c]" />
                 <button
                   onClick={() => { setOpen(false); signOut() }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
@@ -183,19 +183,19 @@ const ProfileMenu: React.FC = () => {
                   <button
                     onClick={() => setShowSessions(false)}
                     title={t('profile.back')}
-                    className="text-ink-muted hover:text-ink-soft dark:hover:text-sepia-200 p-1 -ml-1 rounded-lg hover:bg-paper-sunken dark:hover:bg-[#16202e] transition-colors"
+                    className="text-ink-muted hover:text-ink-soft dark:hover:text-sepia-200 p-1 -ml-1 rounded-lg hover:bg-paper-sunken dark:hover:bg-[#111d2a] transition-colors"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
-                  <span className="text-xs font-semibold text-ink-muted dark:text-sepia-400 uppercase tracking-wide">{t('profile.recentsessions')}</span>
+                  <span className="text-xs font-semibold text-ink-muted dark:text-sepia-300 uppercase tracking-wide">{t('profile.recentsessions')}</span>
                 </div>
                 {recentSessions.length === 0 ? (
-                  <p className="text-sm text-ink-muted dark:text-sepia-500 px-3 py-6 text-center">{t('profile.nosessions')}</p>
+                  <p className="text-sm text-ink-muted dark:text-sepia-300 px-3 py-6 text-center">{t('profile.nosessions')}</p>
                 ) : (
                   recentSessions.map((s) => (
                     <div
                       key={s.id}
-                      className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#16202e] transition-colors"
+                      className="group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-paper-sunken dark:hover:bg-[#111d2a] transition-colors"
                     >
                       <button
                         onClick={() => openSession(s.id)}
@@ -206,7 +206,7 @@ const ProfileMenu: React.FC = () => {
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium text-ink dark:text-sepia-100 truncate">{s.title}</span>
-                          <span className="block text-xs text-ink-muted dark:text-sepia-500">
+                          <span className="block text-xs text-ink-muted dark:text-sepia-300">
                             {Array.isArray(s.flashcards) ? s.flashcards.length : 0} · {new Date(s.created_at).toLocaleDateString()}
                           </span>
                         </span>

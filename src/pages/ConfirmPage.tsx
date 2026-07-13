@@ -38,7 +38,7 @@ const ConfirmPage: React.FC = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md text-center"
       >
-        <div className="bg-paper-raised dark:bg-[#1c2836] rounded-2xl shadow-lift border border-paper-sunken dark:border-[#33445a] p-10">
+        <div className="bg-paper-raised dark:bg-[#1e2c3c] rounded-2xl shadow-lift border border-paper-sunken dark:border-[#33465c] p-10">
           {status === 'loading' && (
             <>
               <Loader2 className="w-12 h-12 mx-auto text-ember-500 animate-spin" />
@@ -56,7 +56,7 @@ const ConfirmPage: React.FC = () => {
                 <CheckCircle2 className="w-9 h-9" />
               </motion.div>
               <h1 className="mt-4 font-display text-xl font-semibold text-ink dark:text-sepia-100">{t('auth.confirmed')}</h1>
-              <p className="mt-1 text-sm text-ink-muted dark:text-sepia-400">{t('auth.confirmed.desc')}</p>
+              <p className="mt-1 text-sm text-ink-muted dark:text-sepia-300">{t('auth.confirmed.desc')}</p>
             </>
           )}
           {status === 'error' && (

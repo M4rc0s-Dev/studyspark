@@ -554,7 +554,7 @@ const LibraryPage: React.FC = () => {
     >
       <button
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-1 text-sm text-ink-muted dark:text-sepia-400 hover:text-ink dark:hover:text-sepia-100 mb-6 transition-colors"
+        className="inline-flex items-center gap-1 text-sm text-ink-muted dark:text-sepia-300 hover:text-ink dark:hover:text-sepia-100 mb-6 transition-colors"
       >
         <ArrowLeft className="w-4 h-4" /> {t('study.back')}
       </button>
@@ -565,7 +565,7 @@ const LibraryPage: React.FC = () => {
       >
         {t('library.title')}
       </motion.h1>
-      <p className="text-ink-muted dark:text-sepia-400 mb-6">{t('library.subtitle')}</p>
+      <p className="text-ink-muted dark:text-sepia-300 mb-6">{t('library.subtitle')}</p>
 
         {/* ---- Main: only the inside of the currently open folder ---- */}
         <main className="flex-1 min-w-0">
@@ -603,7 +603,7 @@ const LibraryPage: React.FC = () => {
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder={t('library.filter')}
-                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-sepia-700 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-400 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
+                className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 dark:border-sepia-700 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-300 focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none"
               />
             </div>
             <button
@@ -621,7 +621,7 @@ const LibraryPage: React.FC = () => {
               className="bg-paper-raised dark:bg-sepia-900 rounded-2xl shadow-soft ring-1 ring-slate-200/70 dark:ring-sepia-800 p-12 text-center"
             >
               <FolderOpen className="w-12 h-12 mx-auto text-slate-300 dark:text-sepia-600 mb-4" />
-              <p className="text-ink-muted dark:text-sepia-400">{t('library.folder.empty')}</p>
+              <p className="text-ink-muted dark:text-sepia-300">{t('library.folder.empty')}</p>
             </div>
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" onContextMenu={openBackgroundMenu}>
@@ -656,7 +656,7 @@ const LibraryPage: React.FC = () => {
                 >
                   <FolderOpen className={`w-10 h-10 mb-2 ${fc ? fc.text : 'text-ember-500'}`} />
                   <span className="text-sm font-semibold text-ink dark:text-sepia-100 text-center truncate max-w-full">{folderName(path)}</span>
-                  <span className="text-xs text-ink-muted dark:text-sepia-500 mt-0.5">{sessionCountFor(path)} {t('library.cards').toLowerCase()}</span>
+                  <span className="text-xs text-ink-muted dark:text-sepia-300 mt-0.5">{sessionCountFor(path)} {t('library.cards').toLowerCase()}</span>
                   <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => { e.stopPropagation(); openRenameFolder(path) }}
@@ -758,7 +758,7 @@ const LibraryPage: React.FC = () => {
               {folderModal.mode === 'create' ? t('library.newfolder') : t('library.rename')}
             </h3>
             {folderModal.mode === 'rename' && folderModal.path && (
-              <p className="text-sm text-ink-muted dark:text-sepia-400 mt-1">
+              <p className="text-sm text-ink-muted dark:text-sepia-300 mt-1">
                 {DRIVE_ROOT_LABEL}{folderModal.path.includes('/') ? '/' + folderModal.path.split('/').slice(0, -1).join('/') : ''}
               </p>
             )}
@@ -875,14 +875,14 @@ const DeckFeedback: React.FC<{ deck: StudySession; t: (k: any, v?: any) => strin
     : t('library.never')
   return (
     <div className="mt-2 pl-4">
-      <div className="flex items-center justify-between text-xs text-ink-muted dark:text-sepia-400 mb-1">
+      <div className="flex items-center justify-between text-xs text-ink-muted dark:text-sepia-300 mb-1">
         <span>{st.studied}/{st.total} {t('library.cards').toLowerCase()}</span>
         <span className={st.acc >= 70 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-ember-600 dark:text-ember-400 font-semibold'}>{st.acc}%</span>
       </div>
       <div className="h-2 rounded-full bg-slate-100 dark:bg-sepia-800 overflow-hidden">
         <div className={`h-full rounded-full ${barColor}`} style={{ width: `${st.pct}%` }} />
       </div>
-      <p className="text-xs text-ink-muted/80 dark:text-sepia-500 mt-1.5">{t('library.last')}: {lastLabel}</p>
+      <p className="text-xs text-ink-muted/80 dark:text-sepia-300 mt-1.5">{t('library.last')}: {lastLabel}</p>
     </div>
   )
 }

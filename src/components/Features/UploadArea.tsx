@@ -90,7 +90,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onUpload, isUploading, innerRef
           value={fileName}
           onChange={(e) => setFileName(e.target.value)}
           placeholder={t('filename.placeholder')}
-          className="w-full px-4 py-3 border border-slate-300 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-400 rounded-xl focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none transition"
+          className="w-full px-4 py-3 border border-slate-300 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-300 rounded-xl focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none transition"
         />
       </div>
 
@@ -132,8 +132,8 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onUpload, isUploading, innerRef
         <p className="text-lg font-semibold text-ink dark:text-sepia-100">
           {isDragActive ? t('upload.drop') : t('upload.drag')}
         </p>
-        <p className="text-ink-muted dark:text-sepia-400 mb-1">{t('upload.click')}</p>
-        <p className="text-xs text-ink-muted/70 dark:text-sepia-500">{t('upload.formats')}</p>
+        <p className="text-ink-muted dark:text-sepia-300 mb-1">{t('upload.click')}</p>
+        <p className="text-xs text-ink-muted/70 dark:text-sepia-300">{t('upload.formats')}</p>
       </div>
 
       {error && (
@@ -166,7 +166,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onUpload, isUploading, innerRef
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
           placeholder={t('upload.text.placeholder')}
-          className="w-full h-36 p-4 border border-slate-300 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-400 rounded-xl resize-none focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none transition"
+          className="w-full h-36 p-4 border border-slate-300 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 dark:placeholder-sepia-300 rounded-xl resize-none focus:ring-2 focus:ring-ember-500 focus:border-transparent outline-none transition"
         />
       </div>
 
@@ -200,7 +200,7 @@ const UploadArea: React.FC<UploadAreaProps> = ({ onUpload, isUploading, innerRef
         <div className="mt-6 flex flex-col items-center justify-center text-center">
           <Loader2 className="w-8 h-8 text-ember-500 animate-spin" />
           <p className="mt-3 font-medium text-ink-soft dark:text-sepia-200">{t('upload.processing')}</p>
-          <p className="text-sm text-ink-muted dark:text-sepia-400">{t('upload.processing.sub')}</p>
+          <p className="text-sm text-ink-muted dark:text-sepia-300">{t('upload.processing.sub')}</p>
         </div>
       )}
     </div>
@@ -223,7 +223,7 @@ const SelectedFileCard: React.FC<{
         </span>
         <div>
           <p className="font-semibold text-ink dark:text-sepia-100">{file.name}</p>
-          <p className="text-sm text-ink-muted dark:text-sepia-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+          <p className="text-sm text-ink-muted dark:text-sepia-300">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
         </div>
       </div>
       <button onClick={clear} className="text-ink-muted hover:text-red-600 transition-colors" aria-label="Quitar archivo">

@@ -123,7 +123,7 @@ const HomePage: React.FC = () => {
   return (
     <div>
       {/* HERO */}
-      <section className="relative overflow-hidden bg-ink dark:bg-[#141e29] paper-grain">
+      <section className="relative overflow-hidden bg-gradient-to-br from-ink via-[#233549] to-[#2d4459] dark:from-[#111f36] dark:via-[#16273f] dark:to-[#1d3350] paper-grain">
         {/* Floating background blobs */}
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-ember-400/15 blur-2xl animate-blob" />
         <div className="absolute top-32 -right-16 w-80 h-80 rounded-full bg-ember-300/10 blur-2xl animate-blob animation-delay-2000" />
@@ -211,7 +211,7 @@ const HomePage: React.FC = () => {
         >
           {t('how.title')}
         </motion.h2>
-        <p className="text-center text-ink-muted dark:text-sepia-400 mb-12 max-w-xl mx-auto">
+        <p className="text-center text-ink-muted dark:text-sepia-300 mb-12 max-w-xl mx-auto">
           Tres pasos y empiezas a repasar. Sin configuraciones raras.
         </p>
         <div className="grid md:grid-cols-3 gap-6">
@@ -239,7 +239,7 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* TESTIMONIALS — editorial pull-quotes */}
-      <section className="bg-paper-sunken dark:bg-[#141e29] border-t border-slate-200 dark:border-sepia-800">
+      <section className="bg-paper-sunken dark:bg-night-soft border-t border-slate-200 dark:border-sepia-700">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <motion.h2
             initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
@@ -265,7 +265,7 @@ const HomePage: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-ink dark:text-sepia-100">{tm.name}</p>
-                    <p className="text-xs text-ink-muted dark:text-sepia-400">{tm.role}</p>
+                    <p className="text-xs text-ink-muted dark:text-sepia-300">{tm.role}</p>
                   </div>
                 </figcaption>
               </motion.figure>
@@ -273,7 +273,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-      <section className="bg-ink dark:bg-[#141e29] py-16">
+      <section className="bg-gradient-to-br from-ink to-[#2d4459] dark:from-[#16273f] dark:to-[#1d3350] py-16">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <motion.h2
             initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}

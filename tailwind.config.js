@@ -37,19 +37,27 @@ export default {
           600: '#3a5670',
           700: '#2d4459',
         },
-        // Cool navy dark mode: deep slate base + soft off-white text for
-        // low-glare night study. Kept under the `sepia` token name.
+        // Cool navy dark mode. Rebuilt with a real luminance ladder so surfaces
+        // separate from each other and from the page: the page (see `night`)
+        // sits deepest, cards lift clearly above it, higher surfaces lift more,
+        // and text is bright for readability. Kept under the `sepia` token name.
         sepia: {
-          50: '#eef2f7', // near-white cool text
-          100: '#e2e8f0', // primary text on dark
-          200: '#cbd5e1', // secondary text
-          300: '#94a3b8', // muted text
-          400: '#33445a', // hairline border
-          500: '#3f5169', // stronger border
-          600: '#16202e', // input / inset surface
-          700: '#1c2836', // card surface
-          800: '#1a2531', // raised surface
-          900: '#141e29', // page background
+          50: '#f1f5fa', // near-white — headings on dark
+          100: '#e0e9f2', // primary text on dark
+          200: '#c4d2e2', // secondary text
+          300: '#9db0c6', // muted text (bright enough to read)
+          400: '#33465c', // hairline border
+          500: '#455b76', // stronger border
+          600: '#111d2a', // input / inset surface (sunken, below cards)
+          700: '#243547', // top surface (chatbot, popovers, hover)
+          800: '#1e2c3c', // raised surface (modals, secondary cards)
+          900: '#18242f', // card surface (clearly above the page)
+        },
+        // Dedicated page background for dark mode — deeper than every `sepia`
+        // surface so cards, modals and inputs all read as lifted above it.
+        night: {
+          DEFAULT: '#0b1220', // page background
+          soft: '#101a2a', // subtle raised band on the page
         },
       },
       boxShadow: {

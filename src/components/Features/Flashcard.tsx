@@ -165,7 +165,7 @@ const Flashcard: React.FC<FlashcardProps> = ({ flashcard, showAnswer, onToggleAn
               ) : (
                 <span />
               )}
-              <span className="text-xs text-ink-muted/70 dark:text-sepia-500 italic">
+              <span className="text-xs text-ink-muted/70 dark:text-sepia-300 italic">
                 Toca para ver la respuesta
               </span>
             </div>
