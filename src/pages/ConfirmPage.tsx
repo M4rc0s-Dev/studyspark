@@ -23,6 +23,7 @@ const ConfirmPage: React.FC = () => {
 
   useEffect(() => {
     const token_hash = params.get('token_hash')
+    const code = params.get('code')
 
     const finish = (ok: boolean) => {
       setStatus(ok ? 'ok' : 'error')
@@ -45,14 +46,31 @@ const ConfirmPage: React.FC = () => {
       return
     }
 
+    // Email confirmation link (type=signup or other): verify the OTP.
     if (token_hash && type && supabase) {
       supabase.auth
         .verifyOtp({ token_hash, type: type as any })
         .then(({ error }) => finish(!error))
         .catch(() => finish(false))
-    } else {
-      finish(false)
+      return
     }
+
+    // OAuth providers (e.g. Google) use the PKCE flow and return `?code=...`
+    // instead of a token_hash. The Supabase client exchanges it for a session.
+    // If it has not been consumed automatically yet, do it explicitly; either
+    // way we land on the home page (the session is now active).
+    if (code && supabase) {
+      supabase.auth
+        .exchangeCodeForSession(code)
+        .then(() => navigate('/', { replace: true }))
+        .catch(() => navigate('/', { replace: true }))
+      return
+    }
+
+    // No recognizable parameters (e.g. a stale/empty deep link, or the OAuth
+    // code was already consumed by the client on load). Don't show a scary
+    // error — just go home, the session will be picked up by AuthContext.
+    navigate('/', { replace: true })
   }, [params, navigate, type])
 
   const handleSavePassword = async (e: React.FormEvent) => {

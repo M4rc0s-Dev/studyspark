@@ -12,12 +12,15 @@ export interface ContextMenuItem {
   // Optional custom node rendered instead of a standard button (e.g. a color row).
   render?: () => React.ReactNode
   // When present, this item opens a nested flyout on hover instead of acting.
-  // The flyout renders a FLAT list; each item's `indent` (tree depth,
-  // 0 = root) drives its left padding so a folder tree reads top-down.
   submenu?: ContextMenuItem[]
   disabled?: boolean
-  // Tree depth (0 = root level). Drives the horizontal indentation.
+  // Tree depth (0 = root level). Drives the horizontal indentation for items
+  // that do NOT carry a `treePrefix`.
   indent?: number
+  // Precomputed box-drawing prefix (e.g. "├── " / "│   " / "    ") used by the
+  // Move folder tree. When present it fully encodes the indentation/connectors,
+  // so siblings always align regardless of depth.
+  treePrefix?: string
 }
 
 export interface ContextMenuState {
@@ -42,8 +45,6 @@ const Row: React.FC<{ item: ContextMenuItem; onClose: () => void }> = ({
   }
 
   const Icon = item.icon
-  const indent = item.indent ?? 0
-  const pad = PAD_BASE + indent * PAD_STEP
   const disabled = item.disabled
 
   return (
@@ -59,16 +60,20 @@ const Row: React.FC<{ item: ContextMenuItem; onClose: () => void }> = ({
           ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10'
           : 'text-gray-700 dark:text-sepia-100 hover:bg-gray-100 dark:hover:bg-sepia-800'
       } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
-      style={{ paddingLeft: pad }}
+      style={{ paddingLeft: PAD_BASE }}
     >
       {Icon && <Icon className="w-4 h-4 shrink-0" />}
+      {item.treePrefix ? (
+        <span className="font-mono text-xs text-slate-400 dark:text-sepia-500 select-none whitespace-pre shrink-0">{item.treePrefix}</span>
+      ) : null}
       <span className="truncate flex-1">{item.label}</span>
     </button>
   )
 }
 
-// Renders a FLAT list of items. A divider is drawn before each top-level
-// folder (indent === 1) so sibling folder clusters read as separate groups.
+// Renders a FLAT list of items. When `treePrefix` is present on the items
+// (the folder "Move" tree), the box-drawing connectors alone convey grouping,
+// so no extra dividers are needed.
 const MenuList: React.FC<{ items: ContextMenuItem[]; onClose: () => void }> = ({
   items,
   onClose,
@@ -76,12 +81,7 @@ const MenuList: React.FC<{ items: ContextMenuItem[]; onClose: () => void }> = ({
   return (
     <div>
       {items.map((item, i) => (
-        <React.Fragment key={i}>
-          {!item.separator && item.indent === 1 && i > 0 && (
-            <div className="my-1 border-t border-gray-100 dark:border-sepia-600/60" />
-          )}
-          <Row item={item} onClose={onClose} />
-        </React.Fragment>
+        <Row key={i} item={item} onClose={onClose} />
       ))}
     </div>
   )
@@ -97,7 +97,7 @@ const Flyout: React.FC<{
   onClose: () => void
 }> = ({ anchor, items, onClose }) => {
   const [side, setSide] = useState<'right' | 'left'>('right')
-  const [top, setTop] = useState(0)
+  const [pos, setPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
   const ref = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
@@ -108,10 +108,17 @@ const Flyout: React.FC<{
     // Flip to the left if the right side would overflow.
     const openRight = r.right + subW + 8 <= window.innerWidth
     setSide(openRight ? 'right' : 'left')
-    // Clamp the vertical start so the submenu stays on screen.
-    const desired = r.top
-    const maxTop = window.innerHeight - subH - 8
-    setTop(Math.max(8, Math.min(desired, Math.max(8, maxTop))))
+    // `fixed` so these VIEWPORT coordinates are used as-is (the flyout is NOT a
+    // child of the trigger's `relative` wrapper — it is portaled below). Clamp
+    // both axes so the submenu never leaves the screen.
+    const desiredX = openRight ? r.right + 4 : r.left - subW - 4
+    const desiredY = r.top
+    const maxX = window.innerWidth - subW - 8
+    const maxY = window.innerHeight - subH - 8
+    setPos({
+      x: Math.max(8, Math.min(desiredX, Math.max(8, maxX))),
+      y: Math.max(8, Math.min(desiredY, Math.max(8, maxY))),
+    })
   }, [anchor, items.length])
 
   return (
@@ -121,10 +128,8 @@ const Flyout: React.FC<{
       exit={{ opacity: 0, x: side === 'right' ? -4 : 4 }}
       transition={{ duration: 0.1 }}
       ref={ref}
-      className={`absolute top-0 ${
-        side === 'right' ? 'left-full -ml-1' : 'right-full -mr-1'
-      } w-60 max-h-[70vh] overflow-y-auto bg-white dark:bg-sepia-900 rounded-xl shadow-2xl border border-gray-100 dark:border-sepia-500 p-1.5 z-10`}
-      style={{ top }}
+      className={`fixed z-[110] w-60 max-h-[70vh] overflow-y-auto bg-white dark:bg-sepia-900 rounded-xl shadow-2xl border border-gray-100 dark:border-sepia-500 p-1.5`}
+      style={{ left: pos.x, top: pos.y }}
     >
       <MenuList items={items} onClose={onClose} />
     </motion.div>
@@ -154,7 +159,6 @@ const FlyoutItem: React.FC<{
             ? 'bg-gray-100 dark:bg-sepia-700 text-gray-800 dark:text-sepia-50'
             : 'text-gray-700 dark:text-sepia-100 hover:bg-gray-100 dark:hover:bg-sepia-800'
         }`}
-        style={item.indent && item.indent > 0 ? { paddingLeft: PAD_BASE + item.indent * PAD_STEP } : undefined}
       >
         {item.icon && <item.icon className="w-4 h-4 shrink-0" />}
         <span className="truncate flex-1">{item.label}</span>

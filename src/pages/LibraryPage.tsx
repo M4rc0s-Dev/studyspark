@@ -443,47 +443,75 @@ const LibraryPage: React.FC = () => {
   )
 
   // ----- Context menus (right click) -----
-  // Build the full folder tree as an indented, ordered list so a "Move" submenu
-  // shows the whole hierarchy (SparkDrive root first, then each folder indented
-  // by its depth). `isDisabled` hides invalid destinations (e.g. a folder into
-  // itself/its own subtree, or the item's current location).
-  // Build the "Move" submenu as a FLAT, shallow-first sorted list.
-  // Each item carries `indent` = its path depth (SparkDrive = 0, a top
-  // folder = 1, deeper = 2, ...). The ContextMenu renders the list
-  // in a scrollable flyout, so even a long tree stays on screen and
-  // there is no recursive inline nesting (which caused the old loop bug).
-  // Because the list is sorted shallow-first, siblings such as "1/3" and
-  // "1/4" (indent 1) always appear ABOVE and LESS indented than
-  // their deeper cousins "1/2/5" / "1/2/6" (indent 2).
+  // Build the "Move" submenu as a real folder TREE. We compute box-drawing
+  // connectors (├── │ └──) for every entry so siblings always align
+  // vertically — the indentation is encoded by the connector string, not by
+  // depth-based padding, which previously caused a "staircase" effect where
+  // each item shifted further right than its sibling.
   const buildMoveTree = (
     onPick: (dest: string) => void,
     opts: { currentLocation: string; isDisabled?: (path: string) => boolean }
   ): ContextMenuItem[] => {
+    // Root destination (SparkDrive) — shown only when moving INTO root is valid.
     const items: ContextMenuItem[] = []
-
-    // SparkDrive root (only when moving INTO root is allowed).
-    if (opts.currentLocation !== '' && !(opts.isDisabled?.('') ?? false)) {
-      items.push({ label: DRIVE_ROOT_LABEL, icon: Home, indent: 0, onClick: () => onPick('') })
+    const rootDisabled = opts.currentLocation === '' || (opts.isDisabled?.('') ?? false)
+    if (!rootDisabled) {
+      items.push({ label: DRIVE_ROOT_LABEL, icon: Home, treePrefix: '', onClick: () => onPick('') })
     }
 
-    // Folders, sorted shallow-first (parents before children) so the tree
-    // reads top-down. `indent` = depth, which drives the padding.
-    const sorted = [...allFolderPaths].sort((a, b) => {
-      const da = a.split(SEP).length
-      const db = b.split(SEP).length
-      if (da !== db) return da - db
-      return a.localeCompare(b)
+    // Valid destination folders (exclude invalid ones up front so the tree
+    // structure reflects only what the user can actually pick).
+    const valid = allFolderPaths.filter((p) => {
+      const disabled = opts.currentLocation === p || (opts.isDisabled?.(p) ?? false)
+      return !disabled
     })
+
+    // Build the tree from a sorted list of paths (shallow-first), tracking each
+    // folder's children so we can emit connectors correctly.
+    const childrenMap = new Map<string, string[]>()
+    const roots: string[] = []
+    const sorted = [...valid].sort((a, b) => a.localeCompare(b))
     sorted.forEach((path) => {
-      const disabled = opts.currentLocation === path || (opts.isDisabled?.(path) ?? false)
-      if (disabled) return
-      items.push({
-        label: folderName(path),
-        icon: Folder,
-        indent: path.split(SEP).length,
-        disabled,
-        onClick: () => onPick(path),
+      const parent = parentPath(path)
+      if (!parent) {
+        roots.push(path)
+      } else {
+        if (!childrenMap.has(parent)) childrenMap.set(parent, [])
+        childrenMap.get(parent)!.push(path)
+      }
+    })
+
+    // Depth-first walk. `prefix` is the indentation drawn so far for ANCESTORS,
+    // and `isLastAt` records, per ancestor level, whether that ancestor was the
+    // last child (so we draw "│   " vs "    ").
+    const walk = (path: string, prefix: string, isLastAt: boolean[]) => {
+      const kids = (childrenMap.get(path) || []).slice().sort((a, b) => folderName(a).localeCompare(folderName(b)))
+      kids.forEach((child, i) => {
+        const isLast = i === kids.length - 1
+        const connector = isLast ? '└── ' : '├── '
+        // Ancestor continuation: "│   " if the ancestor continues, "    " if it ended.
+        const inherited = isLastAt.map((last) => (last ? '    ' : '│   ')).join('')
+        items.push({
+          label: folderName(child),
+          icon: Folder,
+          treePrefix: inherited + connector,
+          onClick: () => onPick(child),
+        })
+        walk(child, prefix + connector, [...isLastAt, isLast])
       })
+    }
+
+    const sortedRoots = roots.slice().sort((a, b) => folderName(a).localeCompare(folderName(b)))
+    sortedRoots.forEach((root, i) => {
+      const isLast = i === sortedRoots.length - 1
+      const connector = isLast ? '└── ' : '├── '
+      items.push({
+        label: folderName(root),
+        icon: Folder,
+        treePrefix: connector,
+        onClick: () => onPick(root),
+      })
+      walk(root, connector, [isLast])
     })
 
     return items.length > 0 ? items : [{ label: '—', onClick: () => {} }]
