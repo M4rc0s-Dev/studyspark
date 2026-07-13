@@ -9,23 +9,24 @@ interface AvatarCropperProps {
   onConfirm: (dataUrl: string) => void
 }
 
-const STAGE = 280 // preview circle diameter (px)
+const STAGE = 280 // preview area (px), square
 const OUTPUT = 256 // exported png size (px)
 const MIN_ZOOM = 1
 const MAX_ZOOM = 3
 
-// Crop a square region out of an uploaded image inside a circular frame.
-// One single math model drives BOTH the live preview and the exported canvas,
-// so "what you see is what you get". At zoom=1 the image already covers the
-// circle (cover fit); zooming in and panning decides which part is kept.
-// Anything outside the circle is shown dimmed so the user sees what is discarded.
+// Crop a circular region out of an uploaded image. A single centered math
+// model drives BOTH the live preview and the exported canvas, so the preview
+// is exactly what gets saved. At zoom=1 the image already covers the stage
+// (cover fit); zoom + pan decide which part stays. The kept circle is shown
+// crisp on top; everything outside it is shown dimmed so the user sees what
+// will be discarded.
 const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm }) => {
   const { t } = useLanguage()
   const imgRef = useRef<HTMLImageElement | null>(null)
   const [src, setSrc] = useState<string>('')
   const [dims, setDims] = useState({ w: 0, h: 0 })
   const [zoom, setZoom] = useState(1)
-  const [offset, setOffset] = useState({ x: 0, y: 0 }) // px, top-left of image vs stage
+  const [offset, setOffset] = useState({ x: 0, y: 0 }) // px, relative to center
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null)
 
   useEffect(() => {
@@ -46,7 +47,8 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
     img.src = src
   }, [src])
 
-  // cover scale: image size (px) at zoom=1 so it fills the stage.
+  // Image size (px) at the current zoom. coverScale makes it fill the stage
+  // at zoom=1 regardless of the source aspect ratio.
   const coverScale = useMemo(() => {
     if (!dims.w || !dims.h) return 1
     return Math.max(STAGE / dims.w, STAGE / dims.h)
@@ -57,7 +59,7 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
     [dims, coverScale, zoom],
   )
 
-  // How far the image can be panned so it still covers the circle.
+  // How far the (centered) image may be panned so it still covers the stage.
   const maxOffset = useMemo(
     () => ({ x: Math.max(0, (displaySize.w - STAGE) / 2), y: Math.max(0, (displaySize.h - STAGE) / 2) }),
     [displaySize],
@@ -99,15 +101,22 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
     if (!ctx) return
     ctx.fillStyle = '#e7ecf2'
     ctx.fillRect(0, 0, OUTPUT, OUTPUT)
-    // Map the same preview geometry into the output canvas.
+    // Same centered geometry as the preview, scaled to the output size.
     const ratio = OUTPUT / STAGE
     const dW = displaySize.w * ratio
     const dH = displaySize.h * ratio
-    const dx = offset.x * ratio
-    const dy = offset.y * ratio
+    const dx = ((STAGE - displaySize.w) / 2 + offset.x) * ratio
+    const dy = ((STAGE - displaySize.h) / 2 + offset.y) * ratio
     ctx.drawImage(img, dx, dy, dW, dH)
     onConfirm(canvas.toDataURL('image/png'))
   }
+
+  const imageStyle = (opacity: number) => ({
+    width: displaySize.w,
+    height: displaySize.h,
+    transform: `translate(${offset.x}px, ${offset.y}px)`,
+    opacity,
+  })
 
   return (
     <motion.div
@@ -119,9 +128,11 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
         {t('auth.avatar.crop')}
       </p>
 
+      {/* Square stage: clips the dimmed (discarded) image to the area; the
+          crisp kept circle is layered on top and clipped to a circle. */}
       <div
-        className="relative mx-auto rounded-full overflow-hidden cursor-grab active:cursor-grabbing select-none touch-none"
-        style={{ width: STAGE, height: STAGE, backgroundColor: 'rgba(0,0,0,0.04)' }}
+        className="relative mx-auto overflow-hidden rounded-2xl cursor-grab active:cursor-grabbing select-none touch-none"
+        style={{ width: STAGE, height: STAGE, backgroundColor: 'rgba(0,0,0,0.05)' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -129,23 +140,27 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
       >
         {src && dims.w > 0 && (
           <>
-            {/* Full image, dimmed: shows what will be discarded outside the circle. */}
-            <img
-              src={src}
-              alt=""
-              draggable={false}
-              className="absolute left-0 top-0 max-w-none pointer-events-none opacity-40"
-              style={{ width: displaySize.w, height: displaySize.h, transform: `translate(${offset.x}px, ${offset.y}px)` }}
-            />
-            {/* Same image clipped to the circle: the part that is kept. */}
-            <div className="absolute inset-0 rounded-full overflow-hidden">
+            {/* Dimmed full image: what will be discarded outside the circle. */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <img
                 src={src}
-                alt="crop"
+                alt=""
                 draggable={false}
-                className="absolute left-0 top-0 max-w-none pointer-events-none"
-                style={{ width: displaySize.w, height: displaySize.h, transform: `translate(${offset.x}px, ${offset.y}px)` }}
+                className="max-w-none"
+                style={imageStyle(0.35)}
               />
+            </div>
+            {/* Crisp kept circle. */}
+            <div className="absolute inset-0 rounded-full overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  src={src}
+                  alt="crop"
+                  draggable={false}
+                  className="max-w-none"
+                  style={imageStyle(1)}
+                />
+              </div>
             </div>
           </>
         )}
