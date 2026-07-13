@@ -532,22 +532,22 @@ const StudyPage: React.FC = () => {
   if (!currentSession || flashcards.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-10 border border-gray-100 dark:border-gray-800 transition-colors">
-          <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white mb-6">
+        <div className="bg-paper-raised dark:bg-stone-900 rounded-3xl shadow-soft ring-1 ring-stone-200/70 dark:ring-stone-800 p-10 transition-colors">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-ink dark:bg-stone-100 flex items-center justify-center text-paper dark:text-ink mb-6">
             <BookOpen className="w-8 h-8" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">{t('study.empty.title')}</h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">{t('study.empty.desc')}</p>
+          <h1 className="font-display text-2xl font-bold text-ink dark:text-stone-50 mb-3">{t('study.empty.title')}</h1>
+          <p className="text-ink-muted dark:text-stone-400 mb-8">{t('study.empty.desc')}</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-ink font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
             >
               <Upload className="w-5 h-5" /> {t('study.empty.cta')}
             </button>
             <button
               onClick={() => navigate('/library')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold shadow-md hover:shadow-lg hover:scale-105 transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-stone-300 dark:border-stone-600 dark:text-stone-200 font-semibold hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <LibraryIcon className="w-5 h-5" /> {t('study.empty.library')}
             </button>
@@ -558,7 +558,7 @@ const StudyPage: React.FC = () => {
                 setDemoPending(true)
                 setConfigOpen(true)
               }}
-              className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline"
+              className="inline-flex items-center gap-1 text-sm text-ember-600 dark:text-ember-400 hover:underline"
             >
               {t('study.demo')}
             </button>
@@ -586,19 +586,19 @@ const StudyPage: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white dark:bg-gray-900 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 p-10 text-center transition-colors"
+          className="bg-paper-raised dark:bg-stone-900 rounded-3xl shadow-lift ring-1 ring-stone-200/70 dark:ring-stone-800 p-10 text-center transition-colors"
         >
           <motion.div
             initial={{ scale: 0, rotate: -20 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 14 }}
-            className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white shadow-lg"
+            className="w-20 h-20 mx-auto rounded-2xl bg-ember-500 flex items-center justify-center text-ink shadow-lg"
           >
             <Trophy className="w-10 h-10" />
           </motion.div>
-          <h1 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">{t('reward.title')}</h1>
-          <p className="mt-2 text-gray-500 dark:text-gray-400">
-            {t('reward.subtitle')} <span className="font-semibold text-gray-800 dark:text-gray-100">{flashcards.length}</span> {t('reward.cards')}
+          <h1 className="mt-6 font-display text-3xl font-bold text-ink dark:text-stone-50">{t('reward.title')}</h1>
+          <p className="mt-2 text-ink-muted dark:text-stone-400">
+            {t('reward.subtitle')} <span className="font-semibold text-ink dark:text-stone-100">{flashcards.length}</span> {t('reward.cards')}
             {' · '}
             <span className="font-semibold text-emerald-600">{correctCount}</span> {t('reward.known')}
           </p>
@@ -612,15 +612,15 @@ const StudyPage: React.FC = () => {
               <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{wrongCount}</p>
               <p className="text-xs text-rose-500 dark:text-rose-400 mt-1">{t('reward.wrong.list')}</p>
             </div>
-            <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl p-4">
-              <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+            <div className="bg-ember-50 dark:bg-ember-500/10 rounded-2xl p-4">
+              <p className="text-2xl font-bold text-ember-600 dark:text-ember-400">
                 {flashcards.length ? Math.round((correctCount / flashcards.length) * 100) : 0}%
               </p>
-              <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-1">{t('reward.accuracy')}</p>
+              <p className="text-xs text-ember-500 dark:text-ember-400 mt-1">{t('reward.accuracy')}</p>
             </div>
-            <div className="bg-violet-50 dark:bg-violet-500/10 rounded-2xl p-4">
-              <p className="text-2xl font-bold text-violet-600 dark:text-violet-400">{elapsedTime}s</p>
-              <p className="text-xs text-violet-500 dark:text-violet-400 mt-1">{t('reward.time')}</p>
+            <div className="bg-stone-100 dark:bg-stone-800 rounded-2xl p-4">
+              <p className="text-2xl font-bold text-ink dark:text-stone-100 tabular-nums">{elapsedTime}s</p>
+              <p className="text-xs text-ink-muted dark:text-stone-400 mt-1">{t('reward.time')}</p>
             </div>
           </div>
 
@@ -630,16 +630,16 @@ const StudyPage: React.FC = () => {
               href="https://ko-fi.com/mvalera_dev"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-ink font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
             >
               <Coffee className="w-5 h-5" /> {t('support.kofi')}
             </a>
-            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t('support.thanks')}</p>
+            <p className="mt-2 text-sm text-ink-muted dark:text-stone-400">{t('support.thanks')}</p>
           </div>
 
           {user ? (
             <div className="mt-6 flex items-center justify-center gap-4">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-100 dark:bg-yellow-500/15 text-amber-700 dark:text-amber-300 font-semibold">
+              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-ember-100 dark:bg-ember-500/15 text-ember-700 dark:text-ember-300 font-semibold">
                 <Sparkles className="w-4 h-4" /> {awardedXp > 0 ? t('reward.xp', { amount: awardedXp }) : t('reward.xp.already')}
               </span>
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-300 font-semibold">
@@ -647,14 +647,14 @@ const StudyPage: React.FC = () => {
               </span>
             </div>
           ) : (
-            <p className="mt-6 text-sm text-gray-400 dark:text-gray-500">{t('auth.login.desc')}</p>
+            <p className="mt-6 text-sm text-ink-muted dark:text-stone-400">{t('auth.login.desc')}</p>
           )}
 
           {/* Save to a folder — only offered when the deck is NOT yet saved (point 2) */}
           {user && currentSession && currentSession.id !== 'demo' && !savedToLibrary && (
-            <div className="mt-6 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 text-left">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3 flex items-center gap-2">
-                <FolderInput className="w-4 h-4 text-indigo-500" /> {t('reward.save.title')}
+            <div className="mt-6 rounded-2xl border border-stone-200 dark:border-stone-700 p-4 text-left">
+              <p className="text-sm font-semibold text-ink-soft dark:text-stone-200 mb-3 flex items-center gap-2">
+                <FolderInput className="w-4 h-4 text-ember-500" /> {t('reward.save.title')}
               </p>
               {savedToLibrary ? (
                 <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
@@ -665,7 +665,7 @@ const StudyPage: React.FC = () => {
                   <select
                     value={saveFolder}
                     onChange={(e) => setSaveFolder(e.target.value)}
-                    className="flex-1 px-3 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3 py-2.5 rounded-xl border border-stone-300 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-50 text-sm outline-none focus:ring-2 focus:ring-ember-500"
                   >
                     <option value="">SparkDrive</option>
                     {availableFolders.map((f) => (
@@ -674,7 +674,7 @@ const StudyPage: React.FC = () => {
                   </select>
                   <button
                     onClick={handleSaveToFolder}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm font-semibold shadow-md hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+                    className="px-5 py-2.5 rounded-xl bg-ember-500 text-ink text-sm font-bold shadow-soft hover:shadow-lift transition-all flex items-center justify-center gap-2"
                   >
                     <FolderInput className="w-4 h-4" /> {t('reward.save.cta')}
                   </button>
@@ -711,9 +711,9 @@ const StudyPage: React.FC = () => {
                   >
                     <div className="mt-2 space-y-2">
                       {wrongCards.map((c) => (
-                        <div key={c.id} className="text-left bg-gray-50 dark:bg-gray-800 rounded-xl p-3 border border-gray-100 dark:border-gray-700">
-                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">{c.question}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{c.answer}</p>
+                        <div key={c.id} className="text-left bg-paper-sunken dark:bg-stone-800 rounded-xl p-3 border border-stone-200 dark:border-stone-700">
+                          <p className="text-sm font-semibold text-ink dark:text-stone-100">{c.question}</p>
+                          <p className="text-sm text-ink-muted dark:text-stone-400 mt-1">{c.answer}</p>
                         </div>
                       ))}
                     </div>
@@ -734,19 +734,19 @@ const StudyPage: React.FC = () => {
             )}
             <button
               onClick={() => resetStudy()}
-              className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-semibold shadow-md hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+              className="px-6 py-3 bg-ember-500 text-ink rounded-xl font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" /> {t('reward.review')}
             </button>
             <button
               onClick={() => exportSession(currentSession, 'csv')}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+              className="px-6 py-3 border border-stone-300 dark:border-stone-600 dark:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
             >
               {t('export.single')}
             </button>
             <button
               onClick={() => setConfirmDiscard(true)}
-              className="px-6 py-3 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+              className="px-6 py-3 border border-stone-300 dark:border-stone-600 dark:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center justify-center gap-2"
             >
               <Upload className="w-4 h-4" /> {t('reward.upload.another')}
             </button>
@@ -759,27 +759,32 @@ const StudyPage: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-        {/* Header */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{currentSession.title}</h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                {t('study.card')} {currentCardIndex + 1} {t('study.of')} {flashcards.length}
-                {unansweredCount > 0 && (
-                  <span className="ml-2 text-xs text-amber-600">· {t('reward.unanswered', { count: unansweredCount })}</span>
-                )}
-              </p>
+        {/* Header — study dashboard card */}
+        <div className="bg-paper-raised dark:bg-stone-900 rounded-3xl shadow-soft ring-1 ring-stone-200/70 dark:ring-stone-800 p-6 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+            <div className="flex items-center gap-3">
+              <span className="w-10 h-10 rounded-xl bg-ink dark:bg-stone-100 flex items-center justify-center text-paper dark:text-ink font-display font-bold">
+                {String(answeredCount + 1)}
+              </span>
+              <div>
+                <h1 className="font-display text-2xl font-bold text-ink dark:text-stone-50 leading-tight">{currentSession.title}</h1>
+                <p className="text-ink-muted dark:text-stone-400">
+                  {t('study.card')} {currentCardIndex + 1} {t('study.of')} {flashcards.length}
+                  {unansweredCount > 0 && (
+                    <span className="ml-2 text-xs text-ember-600 dark:text-ember-400">· {t('reward.unanswered', { count: unansweredCount })}</span>
+                  )}
+                </p>
+              </div>
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap">
               {config.mode === 'timed' && !showAnswer && !answered ? (
                 <div
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                    timedLeft <= 5 ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 animate-pulse' : 'bg-orange-100 dark:bg-orange-500/15 text-orange-700 dark:text-orange-400'
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg font-mono tabular-nums ${
+                    timedLeft <= 5 ? 'bg-rose-100 dark:bg-rose-500/15 text-rose-700 dark:text-rose-400 animate-pulse' : 'bg-ember-100 dark:bg-ember-500/15 text-ember-700 dark:text-ember-300'
                   }`}
                 >
                   <Clock className="w-4 h-4" />
-                  <span className="font-mono text-lg font-semibold">{timedLeft}s</span>
+                  <span className="text-lg font-semibold">{timedLeft}s</span>
                 </div>
               ) : (
                 <Timer time={elapsedTime} isRunning={isTimerRunning} />
@@ -791,8 +796,8 @@ const StudyPage: React.FC = () => {
                   title={isPaused ? t('study.resume') : t('study.pause')}
                   className={`p-2.5 rounded-lg border transition-colors ${
                     isPaused
-                      ? 'border-indigo-300 dark:border-indigo-500/50 bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300'
-                      : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'border-ember-300 dark:border-ember-500/50 bg-ember-50 dark:bg-ember-500/15 text-ember-700 dark:text-ember-300'
+                      : 'border-stone-200 dark:border-stone-700 text-ink-soft dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
                   }`}
                 >
                   {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
@@ -801,7 +806,7 @@ const StudyPage: React.FC = () => {
               <button
                 onClick={() => setConfigOpen(true)}
                 title={t('config.title')}
-                className="p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="p-2.5 rounded-lg border border-stone-200 dark:border-stone-700 text-ink-soft dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
               >
                 <SlidersHorizontal className="w-4 h-4" />
               </button>
@@ -823,12 +828,12 @@ const StudyPage: React.FC = () => {
 
           {/* Pause cover: hides the card so the user cannot peek while paused. */}
           {isPaused && !answered && config.mode === 'timed' && (
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl bg-gray-900/85 dark:bg-black/80 backdrop-blur-sm text-white">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-3xl bg-ink/85 dark:bg-black/80 backdrop-blur-sm text-paper">
               <Pause className="w-10 h-10 mb-3" />
               <p className="text-lg font-semibold">{t('study.paused')}</p>
               <button
                 onClick={togglePause}
-                className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium transition-colors"
+                className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-paper/15 hover:bg-paper/25 text-paper font-medium transition-colors"
               >
                 <Play className="w-4 h-4" /> {t('study.resume')}
               </button>
@@ -837,30 +842,30 @@ const StudyPage: React.FC = () => {
         </div>
 
         {/* Flip hint */}
-        <p className="text-center text-sm text-gray-400 mb-4">
+        <p className="text-center text-sm text-ink-muted dark:text-stone-400 mb-4">
           {showAnswer ? '' : t('study.flip.hint')}
         </p>
 
         {/* Controls */}
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6">
+        <div className="bg-paper-raised dark:bg-stone-900 rounded-3xl shadow-soft ring-1 ring-stone-200/70 dark:ring-stone-800 p-6">
           {!showAnswer ? (
             <div className="flex items-center justify-between gap-3">
               <button
                 onClick={handlePrevious}
                 disabled={currentCardIndex === 0}
-                className="inline-flex items-center gap-1 px-5 py-3 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-1 px-5 py-3 border border-stone-300 dark:border-stone-600 dark:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" /> {t('study.prev')}
               </button>
               <button
                 onClick={() => setShowAnswer(true)}
-                className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition-all"
+                className="flex-1 px-6 py-3 bg-ember-500 text-ink rounded-xl font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
               >
                 {t('study.show')}
               </button>
               <button
                 onClick={handleNext}
-                className="inline-flex items-center gap-1 px-5 py-3 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center gap-1 px-5 py-3 border border-stone-300 dark:border-stone-600 dark:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {t('study.next')} <ChevronRight className="w-4 h-4" />
               </button>
@@ -880,21 +885,21 @@ const StudyPage: React.FC = () => {
                 {!isLast ? (
                   <button
                     onClick={handleNext}
-                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-semibold hover:scale-[1.02] transition-transform"
+                    className="px-6 py-3 bg-ember-500 text-ink rounded-xl font-bold hover:shadow-lift hover:-translate-y-0.5 transition-all"
                   >
                     {t('study.next')} <ChevronRight className="w-4 h-4 inline" />
                   </button>
                 ) : (
                   <button
                     onClick={finishSession}
-                    className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-xl font-semibold hover:scale-[1.02] transition-transform"
+                    className="px-6 py-3 bg-ember-500 text-ink rounded-xl font-bold hover:shadow-lift hover:-translate-y-0.5 transition-all"
                   >
                     {t('reward.finish')} <Trophy className="w-4 h-4 inline" />
                   </button>
                 )}
                 <button
                   onClick={() => resetStudy()}
-                  className="px-6 py-3 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center"
+                  className="px-6 py-3 border border-stone-300 dark:border-stone-600 dark:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors flex items-center"
                 >
                   <RotateCcw className="w-4 h-4 mr-2" /> {t('study.restart')}
                 </button>
@@ -902,7 +907,7 @@ const StudyPage: React.FC = () => {
             </div>
           ) : (
             <div>
-              <p className="text-center text-gray-600 dark:text-gray-300 mb-4">{t('study.wasit')}</p>
+              <p className="text-center text-ink-soft dark:text-stone-300 mb-4 font-medium">{t('study.wasit')}</p>
               <div className="flex justify-center gap-3">
                 <button
                   onClick={() => handleAnswer(true)}
@@ -912,13 +917,13 @@ const StudyPage: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleAnswer(false)}
-                  className="flex-1 px-5 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center"
+                  className="flex-1 px-5 py-3 bg-ember-500 text-ink rounded-xl font-semibold hover:bg-ember-600 transition-colors flex items-center justify-center"
                 >
                   <X className="w-4 h-4 mr-2" /> {t('study.again')}
                 </button>
                 <button
                   onClick={() => setShowAnswer(false)}
-                  className="px-5 py-3 border border-gray-300 dark:border-gray-600 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="px-5 py-3 border border-stone-300 dark:border-stone-600 dark:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
                 >
                   {t('study.hide')}
                 </button>
@@ -927,14 +932,14 @@ const StudyPage: React.FC = () => {
           )}
 
           {/* Finish button (always available, even if not on the last card). */}
-          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-center">
+          <div className="mt-4 pt-4 border-t border-stone-200 dark:border-stone-800 flex justify-center">
             <button
               onClick={finishSession}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-ink-soft dark:text-stone-300 font-medium hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             >
               <Check className="w-4 h-4" /> {t('study.end')}
               {unansweredCount > 0 && (
-                <span className="text-xs text-amber-600">({t('study.unanswered.warn', { count: unansweredCount })})</span>
+                <span className="text-xs text-ember-600 dark:text-ember-400">({t('study.unanswered.warn', { count: unansweredCount })})</span>
               )}
             </button>
           </div>

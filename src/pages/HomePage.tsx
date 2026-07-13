@@ -203,15 +203,18 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* HOW IT WORKS — symmetric numbered steps */}
       <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <motion.h2
           initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
-          className="font-display text-3xl font-bold text-center text-ink dark:text-stone-50 mb-12"
+          className="font-display text-3xl font-bold text-center text-ink dark:text-stone-50 mb-4"
         >
           {t('how.title')}
         </motion.h2>
-        <div className="grid md:grid-cols-3 gap-8">
+        <p className="text-center text-ink-muted dark:text-stone-400 mb-12 max-w-xl mx-auto">
+          Tres pasos y empiezas a repasar. Sin configuraciones raras.
+        </p>
+        <div className="grid md:grid-cols-3 gap-6">
           {steps.map((step, i) => {
             const Icon = step.icon
             return (
@@ -219,23 +222,23 @@ const HomePage: React.FC = () => {
                 key={step.key}
                 initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="text-center group"
+                className="relative bg-paper-raised dark:bg-stone-900 rounded-3xl p-7 ring-1 ring-stone-200/70 dark:ring-stone-800 shadow-soft hover:shadow-lift transition-all"
               >
-                <div className="relative w-14 h-14 mx-auto rounded-2xl bg-ink dark:bg-stone-100 flex items-center justify-center text-paper dark:text-ink mb-5 shadow-soft transition-transform group-hover:scale-110">
-                  <Icon className="w-7 h-7" />
-                  <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-ember-400 text-ink text-xs font-bold flex items-center justify-center">
+                <div className="flex items-center gap-3 mb-5">
+                  <span className="w-11 h-11 rounded-2xl bg-ember-500 text-ink flex items-center justify-center font-display font-bold text-lg">
                     {i + 1}
                   </span>
+                  <Icon className="w-6 h-6 text-ink-soft dark:text-stone-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-ink dark:text-stone-100">{t(step.key as any)}</h3>
-                <p className="mt-2 text-ink-muted dark:text-stone-300 text-sm leading-relaxed">{t(step.descKey as any)}</p>
+                <h3 className="text-lg font-semibold text-ink dark:text-stone-100 mb-2">{t(step.key as any)}</h3>
+                <p className="text-ink-muted dark:text-stone-300 text-sm leading-relaxed">{t(step.descKey as any)}</p>
               </motion.div>
             )
           })}
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
+      {/* TESTIMONIALS — editorial pull-quotes */}
       <section className="bg-paper-sunken dark:bg-[#0c0a09] border-t border-stone-200 dark:border-stone-800">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <motion.h2
@@ -246,17 +249,17 @@ const HomePage: React.FC = () => {
           </motion.h2>
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((tm, i) => (
-              <motion.div
+              <motion.figure
                 key={tm.name}
                 initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="bg-paper-raised dark:bg-stone-900 rounded-2xl p-6 border border-stone-200 dark:border-stone-800 shadow-soft hover:shadow-lift transition-all"
+                className="relative bg-paper-raised dark:bg-stone-900 rounded-3xl p-7 ring-1 ring-stone-200/70 dark:ring-stone-800 shadow-soft hover:shadow-lift transition-all"
               >
-                <div className="flex items-center gap-1 mb-3 text-ember-400">
-                  {[...Array(5)].map((_, k) => <Star key={k} className="w-4 h-4 fill-current" />)}
-                </div>
-                <p className="text-ink-soft dark:text-stone-200 text-sm leading-relaxed mb-4">"{tm.text}"</p>
-                <div className="flex items-center gap-3">
+                <span className="font-display text-5xl text-ember-400/60 leading-none block mb-2 select-none">"</span>
+                <blockquote className="text-ink-soft dark:text-stone-200 text-sm leading-relaxed -mt-4 mb-5">
+                  {tm.text}
+                </blockquote>
+                <figcaption className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-full bg-ink dark:bg-stone-100 flex items-center justify-center text-paper dark:text-ink font-semibold text-sm">
                     {tm.initial}
                   </div>
@@ -264,8 +267,8 @@ const HomePage: React.FC = () => {
                     <p className="text-sm font-semibold text-ink dark:text-stone-100">{tm.name}</p>
                     <p className="text-xs text-ink-muted dark:text-stone-400">{tm.role}</p>
                   </div>
-                </div>
-              </motion.div>
+                </figcaption>
+              </motion.figure>
             ))}
           </div>
         </div>

@@ -21,9 +21,9 @@ const Timer: React.FC<TimerProps> = ({ time, isRunning }) => {
   }
 
   return (
-    <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${isRunning ? 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-400' : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'}`}>
-      <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-red-500 animate-pulse' : 'bg-gray-400'}`} />
-      <span className="font-mono text-lg font-semibold">{formatTime(time)}</span>
+    <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${isRunning ? 'bg-ember-100 text-ember-700 dark:bg-ember-500/15 dark:text-ember-300' : 'bg-stone-100 text-ink-soft dark:bg-stone-800 dark:text-stone-300'}`}>
+      <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-ember-500 animate-pulse' : 'bg-stone-400'}`} />
+      <span className="font-mono text-lg font-semibold tabular-nums">{formatTime(time)}</span>
       <span className="text-sm">{isRunning ? t('mode.recording') : t('mode.paused')}</span>
     </div>
   )

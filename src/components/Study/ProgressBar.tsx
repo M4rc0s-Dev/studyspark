@@ -5,15 +5,18 @@ interface ProgressBarProps {
 }
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ progress }) => {
+  const pct = Math.max(0, Math.min(100, progress))
   return (
-    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
-      <div
-        className="bg-gradient-to-r from-blue-500 to-purple-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-        style={{ width: `${progress}%` }}
-      />
-      <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mt-1">
+    <div>
+      <div className="w-full bg-stone-200 dark:bg-stone-700/60 rounded-full h-2.5 overflow-hidden">
+        <div
+          className="h-2.5 rounded-full bg-ember-500 transition-all duration-500 ease-out"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-ink-muted dark:text-stone-400 mt-1.5 font-medium">
         <span>0%</span>
-        <span>{progress < 10 ? '0' : progress < 100 ? Math.floor(progress) : '100'}%</span>
+        <span>{pct < 10 ? '0' : pct < 100 ? Math.floor(pct) : '100'}%</span>
       </div>
     </div>
   )
