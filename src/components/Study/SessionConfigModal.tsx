@@ -68,10 +68,10 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
             className="w-full max-w-lg bg-paper-raised dark:bg-[#161210] rounded-3xl shadow-lift overflow-hidden"
           >
             {/* Header */}
-            <div className="relative px-6 pt-6 pb-5 bg-gradient-to-br from-ember-500 to-ember-600 text-white">
+            <div className="relative px-6 pt-6 pb-5 bg-paper-sunken dark:bg-[#0f0d0b] text-ink dark:text-stone-100 border-b border-paper-sunken dark:border-[#2a2420]">
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-ink-muted dark:text-stone-400 hover:text-ink dark:hover:text-stone-100 transition-colors"
                 aria-label="Cerrar"
               >
                 <X className="w-5 h-5" />
@@ -190,7 +190,7 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
               </button>
               <button
                 onClick={handleStart}
-                className="flex-1 px-5 py-2.5 rounded-xl bg-gradient-to-r from-ember-500 to-ember-600 text-white font-semibold shadow-soft hover:shadow-lift hover:scale-[1.02] transition-all"
+                className="flex-1 px-5 py-2.5 rounded-xl bg-ember-500 text-ink font-semibold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
               >
                 {t('config.start')}
               </button>

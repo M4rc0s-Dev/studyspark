@@ -167,7 +167,7 @@ const SettingsPage: React.FC = () => {
             href="https://ko-fi.com/mvalera_dev"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-ember-500 to-ember-600 text-white text-sm font-semibold shadow-soft hover:shadow-lift hover:scale-[1.02] transition-all"
+            className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-ember-500 text-ink text-sm font-semibold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
           >
             <Coffee className="w-4 h-4" /> {t('support.kofi')}
           </a>

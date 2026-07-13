@@ -41,15 +41,15 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ elapsedMs, onCancel, erro
   const Icon = current.icon
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-gradient-to-br from-ember-500/95 via-ember-600/95 to-orange-600/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-paper-sunken/95 dark:bg-[#0c0a09]/95 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         className="w-full max-w-md bg-paper-raised dark:bg-[#161210] rounded-3xl shadow-lift p-8 text-center"
       >
         <div className="relative w-20 h-20 mx-auto mb-6">
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-ember-500 to-ember-600 opacity-20 animate-ping" />
-          <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center text-white">
+          <div className="absolute inset-0 rounded-2xl bg-ember-500 opacity-15 animate-ping" />
+          <div className="relative w-20 h-20 rounded-2xl bg-ember-500 flex items-center justify-center text-ink">
             <Icon className="w-9 h-9" />
           </div>
         </div>

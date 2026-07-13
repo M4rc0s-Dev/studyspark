@@ -75,7 +75,7 @@ const ProfileMenu: React.FC = () => {
         onClick={() => { setOpen((o) => !o); setShowSessions(false) }}
         className="flex items-center gap-2 pl-1.5 pr-2 py-1.5 rounded-full border border-paper-sunken dark:border-[#2a2420] hover:bg-paper-sunken dark:hover:bg-[#1c1917] hover:shadow-soft transition-all"
       >
-        <span className="w-8 h-8 rounded-full bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center text-white text-sm font-semibold">
+        <span className="w-8 h-8 rounded-full bg-ember-500 flex items-center justify-center text-ink text-sm font-semibold">
           {initial}
         </span>
         <span className="hidden lg:block text-sm font-medium text-ink-soft dark:text-stone-200 max-w-[120px] truncate">
@@ -94,30 +94,30 @@ const ProfileMenu: React.FC = () => {
             className="absolute right-0 mt-2 w-72 bg-paper-raised dark:bg-[#161210] rounded-2xl shadow-lift border border-paper-sunken dark:border-[#2a2420] overflow-hidden z-50"
           >
             {/* Header */}
-            <div className="px-4 py-4 bg-gradient-to-br from-ember-500 to-ember-600 text-white">
+            <div className="px-4 py-4 bg-paper-sunken dark:bg-[#0f0d0b] border-b border-paper-sunken dark:border-[#2a2420] text-ink dark:text-stone-100">
               <div className="flex items-center gap-3">
-                <span className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center text-white text-lg font-bold">
+                <span className="w-11 h-11 rounded-full bg-ember-500 flex items-center justify-center text-ink text-lg font-bold">
                   {initial}
                 </span>
                 <div className="min-w-0">
                   <p className="font-semibold truncate">{profile?.name || user.name}</p>
-                  <p className="text-xs text-ember-50 truncate">{user.email}</p>
+                  <p className="text-xs text-ink-muted dark:text-stone-400 truncate">{user.email}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-4">
-                <div className="rounded-xl bg-white/10 px-3 py-2">
-                  <p className="text-[11px] text-ember-50">{t('profile.streak')}</p>
+                <div className="rounded-xl bg-paper-raised dark:bg-[#161210] px-3 py-2">
+                  <p className="text-[11px] text-ink-muted dark:text-stone-400">{t('profile.streak')}</p>
                   <p className="text-sm font-semibold flex items-center gap-1">
                     {streakActive ? (
                       <Flame className="w-3.5 h-3.5 text-orange-300" />
                     ) : (
-                      <Flame className="w-3.5 h-3.5 text-white/60" />
+                      <Flame className="w-3.5 h-3.5 text-ink-muted dark:text-stone-500" />
                     )}{' '}
                     {streak} {t('profile.days')}
                   </p>
                 </div>
-                <div className="rounded-xl bg-white/10 px-3 py-2">
-                  <p className="text-[11px] text-ember-50">{t('reward.level', { level })}</p>
+                <div className="rounded-xl bg-paper-raised dark:bg-[#161210] px-3 py-2">
+                  <p className="text-[11px] text-ink-muted dark:text-stone-400">{t('reward.level', { level })}</p>
                   <p className="text-sm font-semibold flex items-center gap-1">
                     <Sparkles className="w-3.5 h-3.5" /> {xp} {t('profile.xp')}
                   </p>

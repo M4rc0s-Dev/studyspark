@@ -307,7 +307,7 @@ const Chatbot: React.FC = () => {
           'fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-xl transition-all',
           isOpen
             ? 'bg-ink rotate-45'
-            : 'bg-gradient-to-br from-ember-500 to-ember-600 hover:scale-105'
+            : 'bg-ember-500 hover:scale-105'
         )}
         aria-label={isOpen ? t('chatbot.title') + ' - cerrar' : t('chatbot.title') + ' - abrir'}
       >
@@ -331,10 +331,10 @@ const Chatbot: React.FC = () => {
             aria-label={t('chatbot.title')}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 bg-gradient-to-r from-ember-500 to-ember-600 text-white rounded-t-2xl">
+            <div className="flex items-center justify-between p-4 bg-paper-sunken dark:bg-[#0f0d0b] text-ink dark:text-stone-100 border-b border-paper-sunken dark:border-[#2a2420]">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Bot className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-xl bg-ember-500 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-ink" />
                 </div>
                 <div>
                   <p className="font-semibold font-display">{t('chatbot.title')}</p>
@@ -369,8 +369,8 @@ const Chatbot: React.FC = () => {
                     )}
                   >
                     {msg.role === 'bot' && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center flex-shrink-0">
-                        <Bot className="w-4 h-4 text-white" />
+                      <div className="w-7 h-7 rounded-full bg-ember-500 flex items-center justify-center flex-shrink-0">
+                        <Bot className="w-4 h-4 text-ink" />
                       </div>
                     )}
                     <div
@@ -384,8 +384,8 @@ const Chatbot: React.FC = () => {
                       {msg.content}
                     </div>
                     {msg.role === 'user' && (
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center flex-shrink-0">
-                        <Sparkles className="w-4 h-4 text-white" />
+                      <div className="w-7 h-7 rounded-full bg-ember-500 flex items-center justify-center flex-shrink-0">
+                        <Sparkles className="w-4 h-4 text-ink" />
                       </div>
                     )}
                   </motion.div>
@@ -397,7 +397,7 @@ const Chatbot: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex gap-3 max-w-[85%]"
                 >
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-ember-500 to-ember-600 flex items-center justify-center flex-shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-ember-500 flex items-center justify-center flex-shrink-0">
                     <Bot className="w-4 h-4 text-white" />
                   </div>
                   <div className="bg-paper-raised dark:bg-[#1c1917] text-ink dark:text-stone-100 rounded-2xl px-4 py-2.5 text-sm shadow-sm">

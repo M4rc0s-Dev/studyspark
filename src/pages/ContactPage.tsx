@@ -76,7 +76,7 @@ const ContactPage: React.FC = () => {
           <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
             <button
               onClick={() => { setShowSuccess(false); navigate(-1) }}
-              className="px-6 py-3 bg-gradient-to-r from-ember-500 to-ember-600 text-white rounded-xl font-semibold shadow-soft hover:scale-[1.02] transition-transform flex items-center justify-center gap-2"
+              className="px-6 py-3 bg-ember-500 text-ink rounded-xl font-semibold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <MessageCircle className="w-4 h-4" /> {t('contact.another')}
             </button>
@@ -178,7 +178,7 @@ const ContactPage: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-ember-500 to-ember-600 text-white font-semibold shadow-soft hover:shadow-lift hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full px-6 py-3 rounded-xl bg-ember-500 text-ink font-semibold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {isSubmitting ? (
             <>
