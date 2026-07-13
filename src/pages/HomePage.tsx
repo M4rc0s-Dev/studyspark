@@ -12,7 +12,7 @@ import { useSettings } from '../context/SettingsContext'
 import { saveSessionToSupabase } from '../lib/sessions'
 import { StudySession } from '../types'
 import type { SessionConfig } from '../context/SettingsContext'
-import { FileText, Wand2, Brain, Sparkles, Zap, Layers, Trophy, ArrowRight } from 'lucide-react'
+import { FileText, Wand2, Brain, Sparkles, Zap, Layers, Trophy, ArrowRight, Star, Quote } from 'lucide-react'
 
 const fade = {
   hidden: { opacity: 0, y: 24 },
@@ -125,9 +125,9 @@ const HomePage: React.FC = () => {
   ]
 
   const testimonials = [
-    { name: 'Lucía M.', role: 'Medicina', text: 'Hice 200 tarjetas de anatomía en una tarde. Aprobé.', initial: 'L' },
-    { name: 'Carlos R.', role: 'Ingeniería', text: 'La repetición espaciada me salvó la carrera. Clarísimo.', initial: 'C' },
-    { name: 'Marta G.', role: 'Oposiciones', text: 'Subí mis temas y salieron flashcards perfectas.', initial: 'M' },
+    { name: 'Lucía M.', role: 'Medicina', text: 'Hice 200 tarjetas de anatomía en una tarde. Aprobé.', initial: 'L', avatar: 'https://i.pravatar.cc/160?img=47', rating: 5 },
+    { name: 'Carlos R.', role: 'Ingeniería', text: 'La repetición espaciada me salvó la carrera. Clarísimo.', initial: 'C', avatar: 'https://i.pravatar.cc/160?img=12', rating: 5 },
+    { name: 'Marta G.', role: 'Oposiciones', text: 'Subí mis temas y salieron flashcards perfectas.', initial: 'M', avatar: 'https://i.pravatar.cc/160?img=32', rating: 4 },
   ]
 
   const stats = [
@@ -276,17 +276,36 @@ const HomePage: React.FC = () => {
                 key={tm.name}
                 initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
-                className="relative bg-paper-raised dark:bg-sepia-900 rounded-3xl p-7 ring-1 ring-slate-200/70 dark:ring-sepia-800 shadow-soft hover:shadow-lift transition-all"
+                className="relative bg-paper-raised dark:bg-sepia-900 rounded-3xl p-7 pt-9 ring-1 ring-slate-200/70 dark:ring-sepia-800 shadow-soft hover:shadow-lift hover:-translate-y-1 transition-all overflow-hidden"
               >
+                {/* ember top accent */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-ember-500/0 via-ember-500/70 to-ember-500/0" aria-hidden />
+                {/* soft quote detail */}
+                <Quote className="absolute top-5 right-5 w-7 h-7 text-ember-500/15 dark:text-ember-400/15" aria-hidden />
+
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-11 h-11 rounded-full bg-ember-500/10 dark:bg-ember-500/15 ring-1 ring-ember-500/20 flex items-center justify-center text-ember-700 dark:text-ember-300 font-display font-semibold text-sm">
-                    {tm.initial}
-                  </div>
+                  <img
+                    src={tm.avatar}
+                    alt={tm.name}
+                    loading="lazy"
+                    className="w-12 h-12 rounded-full object-cover ring-2 ring-ember-500/30 shadow-sm"
+                  />
                   <div>
                     <p className="text-sm font-semibold text-ink dark:text-sepia-100">{tm.name}</p>
                     <p className="text-xs text-ink-muted dark:text-sepia-300">{tm.role}</p>
                   </div>
                 </div>
+
+                {/* rating */}
+                <div className="flex items-center gap-0.5 mb-4" aria-label={`${tm.rating} de 5 estrellas`}>
+                  {Array.from({ length: 5 }).map((_, s) => (
+                    <Star
+                      key={s}
+                      className={`w-3.5 h-3.5 ${s < tm.rating ? 'text-ember-500 fill-ember-500' : 'text-slate-300 dark:text-sepia-700'}`}
+                    />
+                  ))}
+                </div>
+
                 <blockquote className="text-ink-soft dark:text-sepia-200 text-sm leading-relaxed">
                   {tm.text}
                 </blockquote>
