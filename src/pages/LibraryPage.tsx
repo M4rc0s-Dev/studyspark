@@ -447,28 +447,61 @@ const LibraryPage: React.FC = () => {
   // shows the whole hierarchy (SparkDrive root first, then each folder indented
   // by its depth). `isDisabled` hides invalid destinations (e.g. a folder into
   // itself/its own subtree, or the item's current location).
+  // Build the full folder tree as a NESTED structure so a "Move" submenu
+  // shows the whole hierarchy (SparkDrive root first, then each folder
+  // indented by its real depth). `isDisabled` hides invalid destinations
+  // (e.g. a folder into itself/its own subtree, or the item's current
+  // location). A node's `children` are rendered INLINE (indented one
+  // level deeper) by the ContextMenu — no flyouts — so shallow siblings
+  // such as "1/3" and "1/4" always sit ABOVE and LESS indented than
+  // their deeper cousins "1/2/5", "1/2/6".
   const buildMoveTree = (
     onPick: (dest: string) => void,
     opts: { currentLocation: string; isDisabled?: (path: string) => boolean }
   ): ContextMenuItem[] => {
-    const items: ContextMenuItem[] = []
-    // Root (SparkDrive).
-    if (opts.currentLocation !== '' && !(opts.isDisabled?.('') ?? false)) {
-      items.push({ label: DRIVE_ROOT_LABEL, icon: Home, indent: 1, onClick: () => onPick('') })
-    }
-    allFolderPaths.forEach((path) => {
-      const depth = path.split(SEP).length
-      const disabled = opts.currentLocation === path || (opts.isDisabled?.(path) ?? false)
-      if (disabled) return
-      items.push({
-        // `indent` (1 = root, 2 = top folder, 3 = nested...) drives the tree
-        // guide lines rendered by the ContextMenu component.
-        label: folderName(path),
-        icon: Folder,
-        indent: depth,
-        onClick: () => onPick(path),
+    // Build a nested tree from all folder paths.
+    const buildNode = (parentPath: string): ContextMenuItem[] => {
+      const prefix = childrenOf(parentPath)
+      const kids = allFolderPaths.filter((p) => {
+        if (p === parentPath) return false
+        if (!p.startsWith(prefix)) return false
+        const rest = p.slice(prefix.length)
+        return !rest.includes(SEP)
       })
-    })
+      return kids
+        .sort((a, b) => folderName(a).localeCompare(folderName(b)))
+        .map((path) => {
+          const disabled = opts.currentLocation === path || (opts.isDisabled?.(path) ?? false)
+          const node: ContextMenuItem = {
+            label: folderName(path),
+            icon: Folder,
+            disabled,
+            onClick: () => onPick(path),
+            children: buildNode(path),
+          }
+          return node
+        })
+    }
+
+    const rootChildren = buildNode('')
+    const items: ContextMenuItem[] = []
+
+    // SparkDrive root: selectable only when moving INTO root is valid.
+    const rootSelectable =
+      (opts.currentLocation !== '' || (opts.isDisabled?.('') ?? false) === false) &&
+      !(opts.isDisabled?.('') ?? false)
+    if (rootSelectable) {
+      items.push({
+        label: DRIVE_ROOT_LABEL,
+        icon: Home,
+        indent: 1,
+        onClick: () => onPick(''),
+        children: rootChildren,
+      })
+    } else {
+      // Root is the current location (or disabled) — show its children inline.
+      items.push(...rootChildren.map((c) => ({ ...c, indent: 1 })))
+    }
     return items.length > 0 ? items : [{ label: '—', onClick: () => {} }]
   }
 
@@ -657,20 +690,17 @@ const LibraryPage: React.FC = () => {
                   <FolderOpen className={`w-10 h-10 mb-2 ${fc ? fc.text : 'text-ember-500'}`} />
                   <span className="text-sm font-semibold text-ink dark:text-sepia-100 text-center truncate max-w-full">{folderName(path)}</span>
                   <span className="text-xs text-ink-muted dark:text-sepia-300 mt-0.5">{sessionCountFor(path)} {t('library.cards').toLowerCase()}</span>
-                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="absolute top-2 right-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); openRenameFolder(path) }}
-                      className="p-1.5 text-ink-muted hover:text-ember-600 dark:hover:text-ember-400 bg-white/70 dark:bg-sepia-800/70 rounded-lg"
-                      title={t('library.rename')}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                        setContextMenu({ x: r.right - 200, y: r.bottom + 4, items: folderMenuItems(path) })
+                      }}
+                      className="p-1.5 text-ink-muted hover:text-ink dark:hover:text-sepia-100 hover:bg-slate-100 dark:hover:bg-sepia-800 bg-white/70 dark:bg-sepia-800/70 rounded-lg transition-colors"
+                      title={t('library.open')}
                     >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setFolderToDelete(path) }}
-                      className="p-1.5 text-ink-muted hover:text-rose-600 bg-white/70 dark:bg-sepia-800/70 rounded-lg"
-                      title={t('library.delete')}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <MoreVertical className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

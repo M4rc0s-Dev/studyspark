@@ -291,6 +291,86 @@ npm run preview
    - Configure nginx for reverse proxy
    - SSL termination at nginx level
 
+## Auth Setup (Supabase + Resend + Google)
+
+StudySpark uses Supabase Auth (email/password, password reset and Google OAuth).
+The frontend needs only the public anon key — Supabase does the rest server-side.
+
+### 1. Supabase project
+
+1. Create a project at <https://supabase.com> (StudySpark's project id is
+   `nhxkubdzpnceyoemtliu`, region `eu-central-1`).
+2. Copy **Project Settings → API → Project URL** and the **anon/public key**
+   into `.env`:
+
+   ```bash
+   VITE_SUPABASE_URL=https://nhxkubdzpnceyoemtliu.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+   ```
+
+3. Apply the database schema (the `profiles` table already exists; this adds the
+   `avatar` column used by the avatar picker):
+
+   ```sql
+   ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS avatar text NULL;
+   ```
+
+4. **Row Level Security** — confirm these policies exist on `profiles`
+   (owner-only access):
+
+   ```sql
+   CREATE POLICY "Profiles are viewable by owner"
+     ON public.profiles FOR SELECT USING (auth.uid() = id);
+   CREATE POLICY "Profiles are editable by owner"
+     ON public.profiles FOR UPDATE USING (auth.uid() = id);
+   CREATE POLICY "Profiles are insertable by owner"
+     ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+   ```
+
+### 2. Resend (transactional email for password reset)
+
+The "¿Olvidaste tu contraseña?" flow sends a reset link through Supabase
+Auth, but Supabase needs an email provider to actually deliver it.
+
+1. Create an account at <https://resend.com> and verify your domain
+   (StudySpark uses `studyspark.pp.ua`).
+2. In Resend → **API Keys**, generate a key.
+3. In Supabase → **Authentication → Providers → Email**, pick **Resend** as the
+   provider and paste the Resend API key.
+4. Set the **Redirect URLs** (Supabase → Authentication → URL Configuration):
+   - Site URL: `https://your-domain` (e.g. `https://studyspark.pp.ua`)
+   - Redirect URLs (add both):
+     - `https://your-domain/auth/confirm`
+     - `http://localhost:5173/auth/confirm` (local dev)
+5. (Optional) Customize the email template under **Authentication →
+   Email Templates → Reset Password** so the link points to
+   `/auth/confirm?token_hash=...&type=recovery`. StudySpark reads that page,
+   verifies the OTP and shows a "set new password" form.
+
+> Without a provider (step 2–3) Supabase still works locally but the reset
+> email is never sent, so the "forgot password" button appears to do nothing.
+
+### 3. Google OAuth (sign in with Google)
+
+1. Google Cloud Console → **APIs & Services → Credentials → OAuth 2.0 Client ID**.
+   - Application type: **Web application**.
+   - Authorized redirect URI: `https://nhxkubdzpnceyoemtliu.supabase.co/auth/v1/callback`.
+2. Supabase → **Authentication → Providers → Google**: enable it and paste the
+   Google **Client ID** and **Client Secret**.
+3. The "Continuar con Google" button calls `supabase.auth.signInWithOAuth({ provider: 'google' })`.
+   After the redirect back, `onAuthStateChange` recreates the `profiles` row if
+   needed (reading the name from `user_metadata`), so Google users get an avatar
+   and profile automatically.
+
+### How the code wires it
+
+- `src/lib/supabase.ts` — creates the client from the `VITE_*` env vars.
+- `src/context/AuthContext.tsx` — `signIn`, `signUp`, `signInWithGoogle`,
+  `updatePassword`, `resetPassword`, `ensureProfile`.
+- `src/pages/AuthPage.tsx` — login/register form, Google button, forgot-password.
+- `src/pages/ConfirmPage.tsx` — handles `type=signup` (email confirmation)
+  and `type=recovery` (password reset) from the email links.
+
 ## Domain Setup (nic.ua)
 
 ### Step 1: Domain Registration

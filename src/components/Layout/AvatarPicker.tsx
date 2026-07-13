@@ -91,7 +91,7 @@ const AvatarPicker: React.FC<AvatarPickerProps> = ({ value, onSelect, size = 'md
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -8, scale: 0.97 }}
             transition={{ duration: 0.16 }}
-            className="absolute z-50 mt-2 left-0 w-72 rounded-2xl border border-paper-sunken dark:border-[#33465c] bg-paper-raised dark:bg-[#1e2c3c] shadow-lift p-4"
+            className="absolute z-50 mt-2 left-0 w-80 rounded-2xl border border-paper-sunken dark:border-[#33465c] bg-paper-raised dark:bg-[#1e2c3c] shadow-lift p-4"
           >
             {cropping ? (
               <AvatarCropper

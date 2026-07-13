@@ -9,25 +9,32 @@ interface AvatarCropperProps {
   onConfirm: (dataUrl: string) => void
 }
 
-const STAGE = 280 // preview area (px), square
 const OUTPUT = 256 // exported png size (px)
 const MIN_ZOOM = 1
 const MAX_ZOOM = 3
+// Tiny safety margin subtracted from the measured width so the image can never
+// touch the popover edge (the bug where it spilled out the right side).
+const STAGE_MARGIN = 2
 
-// Crop a circular region out of an uploaded image. A single centered math
-// model drives BOTH the live preview and the exported canvas, so the preview
-// is exactly what gets saved. At zoom=1 the image already covers the stage
-// (cover fit); zoom + pan decide which part stays. The kept circle is shown
-// crisp on top; everything outside it is shown dimmed so the user sees what
-// will be discarded.
+// Crop a circular region out of an uploaded image. The stage WIDTH is measured
+// from the real DOM (ref) so the preview never overflows the surrounding
+// popover regardless of its width. A single centered math model drives BOTH the
+// live preview and the exported canvas, so the preview is exactly what is saved.
+// At zoom=1 the image already covers the stage (cover fit); zoom + pan decide
+// which part stays. The kept circle is shown crisp on top; everything outside
+// it is shown dimmed so the user sees what will be discarded.
 const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm }) => {
   const { t } = useLanguage()
   const imgRef = useRef<HTMLImageElement | null>(null)
+  const stageRef = useRef<HTMLDivElement | null>(null)
   const [src, setSrc] = useState<string>('')
   const [dims, setDims] = useState({ w: 0, h: 0 })
   const [zoom, setZoom] = useState(1)
   const [offset, setOffset] = useState({ x: 0, y: 0 }) // px, relative to center
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null)
+
+  // Measured stage size (square). Starts at 256 and shrinks to fit the popover.
+  const [stage, setStage] = useState(256)
 
   useEffect(() => {
     const reader = new FileReader()
@@ -47,22 +54,37 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
     img.src = src
   }, [src])
 
+  // Measure the stage width from the real DOM once it is mounted.
+  useEffect(() => {
+    if (!stageRef.current) return
+    const measure = () => {
+      if (stageRef.current) {
+        const w = stageRef.current.clientWidth
+        if (w > 0) setStage(Math.max(160, Math.floor(w - STAGE_MARGIN)))
+      }
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(stageRef.current)
+    return () => ro.disconnect()
+  }, [])
+
   // Image size (px) at the current zoom. coverScale makes it fill the stage
   // at zoom=1 regardless of the source aspect ratio.
   const coverScale = useMemo(() => {
-    if (!dims.w || !dims.h) return 1
-    return Math.max(STAGE / dims.w, STAGE / dims.h)
-  }, [dims])
+    if (!dims.w || !dims.h || !stage) return 1
+    return Math.max(stage / dims.w, stage / dims.h)
+  }, [dims, stage])
 
   const displaySize = useMemo(
     () => ({ w: dims.w * coverScale * zoom, h: dims.h * coverScale * zoom }),
-    [dims, coverScale, zoom],
+    [dims, coverScale, zoom]
   )
 
   // How far the (centered) image may be panned so it still covers the stage.
   const maxOffset = useMemo(
-    () => ({ x: Math.max(0, (displaySize.w - STAGE) / 2), y: Math.max(0, (displaySize.h - STAGE) / 2) }),
-    [displaySize],
+    () => ({ x: Math.max(0, (displaySize.w - stage) / 2), y: Math.max(0, (displaySize.h - stage) / 2) }),
+    [displaySize, stage]
   )
 
   const clampOffset = useCallback(
@@ -70,7 +92,7 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
       x: Math.max(-maxOffset.x, Math.min(maxOffset.x, x)),
       y: Math.max(-maxOffset.y, Math.min(maxOffset.y, y)),
     }),
-    [maxOffset],
+    [maxOffset]
   )
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -93,7 +115,7 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
 
   const handleConfirm = () => {
     const img = imgRef.current
-    if (!img || !dims.w) return
+    if (!img || !dims.w || !stage) return
     const canvas = document.createElement('canvas')
     canvas.width = OUTPUT
     canvas.height = OUTPUT
@@ -102,11 +124,11 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
     ctx.fillStyle = '#e7ecf2'
     ctx.fillRect(0, 0, OUTPUT, OUTPUT)
     // Same centered geometry as the preview, scaled to the output size.
-    const ratio = OUTPUT / STAGE
+    const ratio = OUTPUT / stage
     const dW = displaySize.w * ratio
     const dH = displaySize.h * ratio
-    const dx = ((STAGE - displaySize.w) / 2 + offset.x) * ratio
-    const dy = ((STAGE - displaySize.h) / 2 + offset.y) * ratio
+    const dx = ((stage - displaySize.w) / 2 + offset.x) * ratio
+    const dy = ((stage - displaySize.h) / 2 + offset.y) * ratio
     ctx.drawImage(img, dx, dy, dW, dH)
     onConfirm(canvas.toDataURL('image/png'))
   }
@@ -131,8 +153,9 @@ const AvatarCropper: React.FC<AvatarCropperProps> = ({ file, onCancel, onConfirm
       {/* Square stage: clips the dimmed (discarded) image to the area; the
           crisp kept circle is layered on top and clipped to a circle. */}
       <div
+        ref={stageRef}
         className="relative mx-auto overflow-hidden rounded-2xl cursor-grab active:cursor-grabbing select-none touch-none"
-        style={{ width: STAGE, height: STAGE, backgroundColor: 'rgba(0,0,0,0.05)' }}
+        style={{ width: '100%', aspectRatio: '1 / 1', backgroundColor: 'rgba(0,0,0,0.05)' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

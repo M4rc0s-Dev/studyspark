@@ -17,6 +17,9 @@ interface AuthContextValue {
   loading: boolean
   signUp: (email: string, password: string, name?: string, avatar?: string) => Promise<{ needsConfirmation: boolean }>
   signIn: (email: string, password: string) => Promise<void>
+  signInWithGoogle: () => Promise<void>
+  updatePassword: (newPassword: string) => Promise<void>
+  resetPassword: (email: string) => Promise<void>
   signOut: () => Promise<void>
   refreshSessions: () => Promise<void>
   addXp: (amount: number) => Promise<void>
@@ -221,6 +224,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [user, profile]
   )
 
+  // Keep the profile in sync after a Google (or other OAuth) sign-in where
+  // the name lives only in the auth user_metadata.
+  const signInWithGoogle = useCallback(async () => {
+    if (!supabase) throw new Error('Auth no disponible')
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/confirm` },
+    })
+    if (error) throw error
+  }, [])
+
+  const updatePassword = useCallback(async (newPassword: string) => {
+    if (!supabase) throw new Error('Auth no disponible')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) throw error
+  }, [])
+
+  // Sends a password-reset email (via Supabase + Resend). The user clicks the
+  // link, lands on /auth/confirm, and chooses a new password in the UI.
+  const resetPassword = useCallback(async (email: string) => {
+    if (!supabase) throw new Error('Auth no disponible')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/confirm`,
+    })
+    if (error) throw error
+  }, [])
+
   const signOut = useCallback(async () => {
     if (supabase) await supabase.auth.signOut()
     setUser(null)
@@ -230,7 +260,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, sessions, loading, signUp, signIn, signOut, refreshSessions, addXp, updateAvatar }}
+      value={{ user, profile, sessions, loading, signUp, signIn, signInWithGoogle, updatePassword, resetPassword, signOut, refreshSessions, addXp, updateAvatar }}
     >
       {children}
     </AuthContext.Provider>
