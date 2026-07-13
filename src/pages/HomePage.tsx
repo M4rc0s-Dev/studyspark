@@ -12,7 +12,7 @@ import { useSettings } from '../context/SettingsContext'
 import { saveSessionToSupabase } from '../lib/sessions'
 import { StudySession } from '../types'
 import type { SessionConfig } from '../context/SettingsContext'
-import { FileText, Wand2, Brain, Sparkles, Zap, Layers, Trophy, Repeat, Gift, Quote } from 'lucide-react'
+import { FileText, Wand2, Brain, Sparkles, Zap, Layers, Trophy, Quote } from 'lucide-react'
 
 const fade = {
   hidden: { opacity: 0, y: 24 },
@@ -120,74 +120,71 @@ const HomePage: React.FC = () => {
     { icon: Trophy, value: '∞', label: 'Repaso' },
   ]
 
-  const features = [
-    { icon: Wand2, titleKey: 'feat.f1', descKey: 'feat.f1.desc' },
-    { icon: Repeat, titleKey: 'feat.f2', descKey: 'feat.f2.desc' },
-    { icon: FileText, titleKey: 'feat.f3', descKey: 'feat.f3.desc' },
-    { icon: Gift, titleKey: 'feat.f4', descKey: 'feat.f4.desc' },
-  ]
-
-  // Editorial hairline divider used to separate calm sections.
-  const SectionRule = ({ labelKey }: { labelKey: string }) => (
-    <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-slate-200 dark:border-sepia-700" />
-      </div>
-      <div className="relative flex justify-center">
-        <span className="bg-paper px-4 text-xs font-semibold uppercase tracking-[0.2em] text-ember-600 dark:text-ember-400">
-          {t(labelKey as any)}
-        </span>
-      </div>
-    </div>
-  )
-
   return (
     <div>
-      {/* HERO — calm editorial, light bg in light mode / navy in dark */}
+      {/* HERO — asymmetric editorial split: pitch left, illustration right */}
       <section className="relative overflow-hidden bg-paper text-ink dark:bg-gradient-to-br dark:from-[#111f36] dark:via-[#16273f] dark:to-[#1d3350] dark:text-sepia-100 paper-grain">
         {/* Soft floating blobs — scaled down so they never wash out the text */}
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-ember-400/10 dark:bg-ember-400/15 blur-2xl animate-blob" />
         <div className="absolute top-32 -right-16 w-80 h-80 rounded-full bg-ember-300/10 dark:bg-ember-300/10 blur-2xl animate-blob animation-delay-2000" />
 
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16 text-center">
-          <motion.span
-            initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-ember-500/30 bg-ember-500/10 text-ember-700 dark:text-ember-200 text-sm font-medium mb-6"
-          >
-            <Sparkles className="w-4 h-4" /> {t('hero.badge')}
-          </motion.span>
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-28 grid lg:grid-cols-[1.05fr_0.95fr] gap-12 items-center">
+          <div>
+            <motion.span
+              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-ember-500/30 bg-ember-500/10 text-ember-700 dark:text-ember-200 text-sm font-medium mb-6"
+            >
+              <Sparkles className="w-4 h-4" /> {t('hero.badge')}
+            </motion.span>
 
-          <motion.h1
-            initial="hidden" animate="show" variants={fade} transition={{ duration: 0.5 }}
-            className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-ink dark:text-sepia-50 leading-[1.05] tracking-tight"
-          >
-            {t('hero.title.1')}{' '}
-            <span className="text-ember-600 dark:text-ember-300">
-              {t('hero.title.2')}
-            </span>{' '}
-            {t('hero.title.3')}
-          </motion.h1>
+            <motion.h1
+              initial="hidden" animate="show" variants={fade} transition={{ duration: 0.5 }}
+              className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-ink dark:text-sepia-50 leading-[1.05] tracking-tight"
+            >
+              {t('hero.title.1')}{' '}
+              <span className="text-ember-600 dark:text-ember-300">
+                {t('hero.title.2')}
+              </span>{' '}
+              {t('hero.title.3')}
+            </motion.h1>
 
-          <motion.p
-            initial="hidden" animate="show" variants={fade} transition={{ delay: 0.1, duration: 0.5 }}
-            className="mt-5 text-lg text-ink-muted dark:text-sepia-300 max-w-2xl mx-auto"
+            <motion.p
+              initial="hidden" animate="show" variants={fade} transition={{ delay: 0.1, duration: 0.5 }}
+              className="mt-5 text-lg text-ink-muted dark:text-sepia-300 max-w-xl"
+            >
+              {t('hero.subtitle')}
+            </motion.p>
+
+            <motion.button
+              initial="hidden" animate="show" variants={fade} transition={{ delay: 0.18, duration: 0.5 }}
+              onClick={scrollToUpload}
+              className="mt-8 inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-ember-500 text-paper text-base font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
+            >
+              <Sparkles className="w-5 h-5" /> {t('cta.create')}
+            </motion.button>
+          </div>
+
+          {/* Editorial illustration panel — visible on large screens */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.25, duration: 0.6 }}
+            className="relative hidden lg:block"
           >
-            {t('hero.subtitle')}
-          </motion.p>
+            <div className="bg-paper-raised dark:bg-sepia-800/90 rounded-3xl shadow-lift ring-1 ring-slate-200/70 dark:ring-sepia-700/60 p-7">
+              <StudyIllustration />
+              <p className="mt-5 font-display text-lg font-semibold text-ink dark:text-sepia-50 leading-snug">
+                Tu material, convertido en repaso inteligente.
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-ink-soft dark:text-sepia-300">
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-ember-500" /> Sube PDF, Word o texto</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-ember-500" /> La IA crea las tarjetas</li>
+                <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-ember-500" /> Estudia con repetición espaciada</li>
+              </ul>
+            </div>
+          </motion.div>
         </div>
-
-        {/* Upload sits on the calm page, centered as the focal point */}
-        <motion.div
-          initial="hidden" animate="show" variants={fade} transition={{ delay: 0.18, duration: 0.5 }}
-          className="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 -mb-24"
-        >
-          <UploadArea onUpload={handleUpload} isUploading={isUploading} innerRef={uploadRef} />
-        </motion.div>
       </section>
-
-      {/* Floating upload casts a soft shadow onto the band below */}
-      <div className="h-24" aria-hidden />
 
       {/* STATS band — quiet, sits on the page */}
       <section className="bg-paper-sunken dark:bg-night-soft border-y border-slate-200 dark:border-sepia-700">
@@ -208,6 +205,16 @@ const HomePage: React.FC = () => {
             )
           })}
         </div>
+      </section>
+
+      {/* UPLOAD — its own dedicated, calm section */}
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <motion.div
+          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
+          transition={{ duration: 0.5 }}
+        >
+          <UploadArea onUpload={handleUpload} isUploading={isUploading} innerRef={uploadRef} />
+        </motion.div>
       </section>
 
       {/* HOW IT WORKS — symmetric numbered steps */}
@@ -239,42 +246,6 @@ const HomePage: React.FC = () => {
                 </div>
                 <h3 className="text-lg font-semibold text-ink dark:text-sepia-100 mb-2">{t(step.key as any)}</h3>
                 <p className="text-ink-muted dark:text-sepia-300 text-sm leading-relaxed">{t(step.descKey as any)}</p>
-              </motion.div>
-            )
-          })}
-        </div>
-      </section>
-
-      <SectionRule labelKey="how.title" />
-
-      {/* FEATURES — editorial grid using the feat.* keys */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <motion.h2
-          initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
-          className="font-display text-3xl font-bold text-center text-ink dark:text-sepia-50 mb-3"
-        >
-          {t('feat.title')}
-        </motion.h2>
-        <p className="text-center text-ink-muted dark:text-sepia-300 mb-12 max-w-xl mx-auto">
-          {t('feat.subtitle')}
-        </p>
-        <div className="grid sm:grid-cols-2 gap-x-8 gap-y-10">
-          {features.map((f, i) => {
-            const Icon = f.icon
-            return (
-              <motion.div
-                key={f.titleKey}
-                initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade}
-                transition={{ delay: (i % 2) * 0.1, duration: 0.5 }}
-                className="flex items-start gap-4"
-              >
-                <div className="shrink-0 w-12 h-12 rounded-2xl bg-ember-500/10 dark:bg-ember-500/15 ring-1 ring-ember-500/20 flex items-center justify-center">
-                  <Icon className="w-6 h-6 text-ember-600 dark:text-ember-300" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-ink dark:text-sepia-100 mb-1">{t(f.titleKey as any)}</h3>
-                  <p className="text-ink-muted dark:text-sepia-300 text-sm leading-relaxed">{t(f.descKey as any)}</p>
-                </div>
               </motion.div>
             )
           })}
