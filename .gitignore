@@ -5,6 +5,10 @@ dist-ssr
 .env
 .env.*
 
+# Claude Skills
+graphify-out
+CLAUDE.md
+
 # editor / OS
 .vscode/*
 !.vscode/extensions.json
