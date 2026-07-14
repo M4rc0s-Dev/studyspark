@@ -54,15 +54,17 @@ export function buildMoveTree(
     items.push({ label: rootLabel, icon: Home, treePrefix: '', onClick: () => {}, disabled: true })
   }
 
-  const valid = allFolderPaths.filter((p) => {
-    // Only filter out currentLocation (e.g., the item's own folder or root).
-    // isDisabled should only visually disable, not remove from the tree.
-    return opts.currentLocation !== p
-  })
+  // Keep EVERY folder in the tree. We must NOT drop currentLocation: removing
+  // it orphans its children, so sibling subfolders at the same level vanish from
+  // the menu. Instead, currentLocation (and anything from isDisabled) stays in
+  // the tree but is marked `disabled` by the walk/root renderers below — visible
+  // but unclickable. The only hard exclusion is an empty string when it is the
+  // current location AND root is not explicitly allowed (handled via rootDisabled).
+  const valid = [...allFolderPaths].sort((a, b) => a.localeCompare(b))
 
   const childrenMap = new Map<string, string[]>()
   const roots: string[] = []
-  const sorted = [...valid].sort((a, b) => a.localeCompare(b))
+  const sorted = valid
   sorted.forEach((path) => {
     const parent = parentPath(path)
     if (!parent) {

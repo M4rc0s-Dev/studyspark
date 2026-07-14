@@ -30,6 +30,19 @@ export function xpForSession(cards: { difficulty?: Difficulty; correct?: boolean
   return cards.reduce((sum, c) => sum + xpForCard(c.difficulty, c.correct === true), 0)
 }
 
+// XP for a focused "review the cards I got wrong" pass (point 5). The user
+// already earned the 10% consolation fraction on the first attempt, so we do
+// NOT re-add it. A card corrected on this retry earns 50% of its base value;
+// a card missed again earns nothing extra (0).
+export const WRONG_REVIEW_FRACTION = 0.5
+export function xpForWrongReview(cards: { difficulty?: Difficulty; correct?: boolean }[]): number {
+  return cards.reduce((sum, c) => {
+    if (c.correct !== true) return sum // still wrong on retry -> no extra XP
+    const base = c.difficulty ? XP_BY_DIFFICULTY[c.difficulty] : DEFAULT_CORRECT_XP
+    return sum + Math.round(base * WRONG_REVIEW_FRACTION)
+  }, 0)
+}
+
 // ----- Levels -----
 // Curve is quadratic (each level costs a bit more than the last) until LEVEL_CAP,
 // after which every further level costs a FIXED amount. This keeps early levels

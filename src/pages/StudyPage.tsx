@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import { saveSessionToSupabase, loadSessionFromSupabase } from '../lib/sessions'
 import { exportSession } from '../lib/export'
-import { xpForSession } from '../lib/leveling'
+import { xpForSession, xpForWrongReview } from '../lib/leveling'
 import { sampleDeck } from '../data/sampleDeck'
 import { Flashcard as FlashcardType, StudySession } from '../types'
 import {
@@ -197,27 +197,35 @@ const StudyPage: React.FC = () => {
   const elapsedRef = useRef(0)
 
   // Load a saved session from Supabase when opened by id and not in local store.
-  // When the library passed `filter: 'pending'`, trim the deck to only the
-  // cards the user never answered before studying (point 8).
+  // When the library passed `filter: 'pending'` / `'wrong'`, trim the deck to
+  // only the relevant cards (point 8). IMPORTANT: this must run whenever a
+  // filter is present — regardless of whether currentSession already exists —
+  // because openPendingSession/openWrongSession call setCurrentSession(s) before
+  // navigating, so currentSession is non-null on arrival. If we gated on
+  // `!currentSession`, the trim would never run and the whole deck would study.
   const navFilter = (location.state as { filter?: string } | null)?.filter
   useEffect(() => {
     let active = true
-    if (sessionId && !currentSession) {
-      loadSessionFromSupabase(sessionId).then((s) => {
-        if (active && s) {
-          let trimmed = s
-          // `pending` -> only cards never answered; `wrong` -> only cards the
-          // user got wrong before. Both let the library launch a focused review
-          // straight from the deck card instead of the final summary screen.
-          if (navFilter === 'pending') {
-            trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.studied !== true) }
-          } else if (navFilter === 'wrong') {
-            trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.correct === false) }
-          }
-          setCurrentSession(trimmed)
-          setLoadedFromCloud(true)
-        }
-      })
+    if (!sessionId) return
+    const applyFilter = (s: StudySession) => {
+      if (!active) return
+      let trimmed = s
+      // `pending` -> only cards never answered; `wrong` -> only cards the user
+      // got wrong before. Both let the library launch a focused review straight
+      // from the deck card instead of the final summary screen.
+      if (navFilter === 'pending') {
+        trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.studied !== true) }
+      } else if (navFilter === 'wrong') {
+        trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.correct === false) }
+      }
+      setCurrentSession(trimmed)
+      setLoadedFromCloud(true)
+    }
+    if (!currentSession) {
+      loadSessionFromSupabase(sessionId).then((s) => s && applyFilter(s))
+    } else if (navFilter) {
+      // Already loaded locally (set by the library before navigating): just trim.
+      applyFilter(currentSession)
     }
     return () => {
       active = false
@@ -376,27 +384,44 @@ const StudyPage: React.FC = () => {
     // pollute the user's real progress).
     const isDemo = currentSession?.id === 'demo'
 
-    // XP is based on the difficulty of each card (wrong/unanswered = 10%).
-    const earned = xpForSession(flashcards)
+    // A focused review (pending/wrong) reuses the same deck id, so we key the
+    // anti-spam award by `sid + filter`. That lets a normal study, a pending
+    // review, and a wrong review each award XP independently (point 5/6).
+    const reviewKind = navFilter === 'pending' ? 'pending' : navFilter === 'wrong' ? 'wrong' : 'full'
 
-    // Only award XP the FIRST time a given session is finished (anti-spam).
+    // XP is based on the difficulty of each card. For a "wrong" review we apply
+    // the retry rule (point 5): a corrected card earns 50% of its base XP (the
+    // 10% already earned on the first failure is NOT re-added), a still-wrong
+    // card earns nothing extra.
+    const earned =
+      reviewKind === 'wrong'
+        ? xpForWrongReview(flashcards)
+        : xpForSession(flashcards)
+
+    // Only award XP the FIRST time a given (session, review-kind) is finished.
     const sid = currentSession?.id
-    const alreadyAwarded = !sid || awardedSessionsRef.current.has(sid)
+    const awardKey = sid ? `${sid}:${reviewKind}` : null
+    const alreadyAwarded = !awardKey || awardedSessionsRef.current.has(awardKey)
     setAwardedXp(!isDemo && !alreadyAwarded ? earned : 0)
 
-    if (user && currentSession && sid && !alreadyAwarded && !isDemo) {
-      awardedSessionsRef.current.add(sid)
+    if (user && currentSession && awardKey && !alreadyAwarded && !isDemo) {
+      awardedSessionsRef.current.add(awardKey)
       try {
         sessionStorage.setItem(AWARDED_KEY, JSON.stringify([...awardedSessionsRef.current]))
       } catch {
         /* ignore */
       }
-      const finalSession: StudySession = { ...currentSession, completedAt: new Date() }
-      setCurrentSession(finalSession)
-      saveSessionToSupabase(finalSession)
+      // Only a FULL study pass marks the deck as completed/persisted as the
+      // canonical progress. Focused reviews just grant XP — they don't overwrite
+      // the deck's overall studied/correct flags with the trimmed subset.
+      if (reviewKind === 'full') {
+        const finalSession: StudySession = { ...currentSession, completedAt: new Date() }
+        setCurrentSession(finalSession)
+        saveSessionToSupabase(finalSession)
+      }
       addXp(earned)
     }
-  }, [flashcards, user, currentSession, setCurrentSession, addXp, stopTimedCountdown])
+  }, [flashcards, user, currentSession, navFilter, setCurrentSession, addXp, stopTimedCountdown])
 
   const resetStudy = useCallback(
     (deck?: FlashcardType[]) => {
