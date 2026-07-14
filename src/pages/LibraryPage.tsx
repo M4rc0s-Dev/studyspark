@@ -681,13 +681,16 @@ const LibraryPage: React.FC = () => {
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" onContextMenu={openBackgroundMenu}>
               {/* Folder widgets (distinct look) */}
-              {visibleFolders.map((path) => {
+              {visibleFolders.map((path, i) => {
                 const fc = colorClasses(folderColors[path])
                 return (
-                <div
+                <motion.div
                   key={path}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min(i * 0.04, 0.3) }}
                   draggable={folderModal?.mode !== 'rename' || folderModal?.path !== path}
-                  onDragStart={(e) => {
+                  onDragStartCapture={(e) => {
                     setDragFolderPath(path)
                     if (dragImageRef.current) {
                       dragImageRef.current.textContent = folderName(path)
@@ -695,13 +698,13 @@ const LibraryPage: React.FC = () => {
                     }
                     e.dataTransfer.effectAllowed = 'move'
                   }}
-                  onDragEnd={() => { setDragFolderPath(null); setDragOverFolder(undefined) }}
+                  onDragEndCapture={() => { setDragFolderPath(null); setDragOverFolder(undefined) }}
                   onDragOver={(e) => { e.preventDefault(); if (dragFolderPath !== path) setDragOverFolder(path) }}
                   onDragLeave={() => setDragOverFolder((f) => (f === path ? undefined : f))}
                   onDrop={(e) => { e.preventDefault(); handleDropOnFolder(path) }}
                   onDoubleClick={() => enterFolder(path)}
                   onContextMenu={(e) => openFolderMenu(e, path)}
-                  className={`group relative select-none flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed transition-colors cursor-pointer ${
+                  className={`group relative select-none flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer hover:-translate-y-1 hover:shadow-lift ${
                     fc ? `${fc.border} ${fc.bg}` : 'border-ember-200 dark:border-ember-500/30 bg-ember-50/40 dark:bg-ember-500/5 hover:bg-ember-50 dark:hover:bg-ember-500/10'
                   } ${
                     dragFolderPath === path ? 'opacity-40' : ''
@@ -725,18 +728,21 @@ const LibraryPage: React.FC = () => {
                       <MoreVertical className="w-4 h-4" />
                     </button>
                   </div>
-                </div>
+                </motion.div>
                 )
               })}
 
               {/* Session cards (draggable) */}
-              {visibleSessions.map((s) => {
+              {visibleSessions.map((s, i) => {
                 const sc = colorClasses(s.color)
                 return (
-                <div
+                <motion.div
                   key={s.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: Math.min((visibleFolders.length + i) * 0.04, 0.4) }}
                   draggable={renamingSession !== s.id}
-                  onDragStart={(e) => {
+                  onDragStartCapture={(e) => {
                     setDragSessionId(s.id)
                     if (dragImageRef.current) {
                       dragImageRef.current.textContent = s.title
@@ -744,9 +750,9 @@ const LibraryPage: React.FC = () => {
                     }
                     e.dataTransfer.effectAllowed = 'move'
                   }}
-                  onDragEnd={() => { setDragSessionId(null); setDragOverFolder(undefined) }}
+                  onDragEndCapture={() => { setDragSessionId(null); setDragOverFolder(undefined) }}
                   onContextMenu={(e) => openSessionMenu(e, s)}
-                  className={`relative group select-none rounded-2xl shadow-soft border p-5 flex flex-col cursor-grab active:cursor-grabbing ${
+                  className={`relative group select-none rounded-2xl shadow-soft border p-5 flex flex-col cursor-grab active:cursor-grabbing transition-all hover:-translate-y-1 hover:shadow-lift ${
                     sc ? `${sc.bg} ${sc.border}` : 'bg-paper-raised dark:bg-sepia-900 border-slate-100 dark:border-sepia-800'
                   } ${
                     dragSessionId === s.id ? 'opacity-40' : ''
@@ -787,22 +793,25 @@ const LibraryPage: React.FC = () => {
                   <div className="mt-4 flex items-center gap-2">
                     <button
                       onClick={() => openSession(s)}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 active:scale-95 transition-all"
                     >
                       <BookOpen className="w-4 h-4" /> {t('library.study')}
                     </button>
-                    {pendingCountFor(s) > 0 && (
-                      <button
-                        onClick={() => openPendingSession(s)}
-                        title={t('reward.study.pending')}
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold shadow-soft hover:bg-amber-600 transition-colors"
-                      >
-                        <ListX className="w-4 h-4" /> {t('reward.study.pending')}
-                        <span className="rounded-full bg-white/25 px-1.5 text-xs">{pendingCountFor(s)}</span>
-                      </button>
-                    )}
+                    <button
+                      onClick={() => pendingCountFor(s) > 0 && openPendingSession(s)}
+                      disabled={pendingCountFor(s) === 0}
+                      title={t('reward.study.pending')}
+                      className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-soft transition-all ${
+                        pendingCountFor(s) === 0
+                          ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
+                          : 'bg-amber-500 text-white hover:bg-amber-600 hover:-translate-y-0.5 active:scale-95'
+                      }`}
+                    >
+                      <ListX className="w-4 h-4" /> {t('reward.study.pending')}
+                      <span className={`rounded-full px-1.5 text-xs ${pendingCountFor(s) === 0 ? 'bg-slate-300 dark:bg-sepia-700' : 'bg-white/25'}`}>{pendingCountFor(s)}</span>
+                    </button>
                   </div>
-                </div>
+                </motion.div>
                 )
               })}
             </div>

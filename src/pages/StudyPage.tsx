@@ -841,44 +841,86 @@ const StudyPage: React.FC = () => {
             </div>
           )}
 
-          {/* Action buttons: a single homogeneous grid so every button is the
-              same height/width/rhythm and nothing clips out of the card. The
-              "pending" button matches the others exactly. */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8">
-            <button
+          {/* Action buttons — a 2-1-2 grid (two on top, one spanning both
+              columns in the middle, two on the bottom). Every button is always
+              rendered; "Pendientes" and "Falladas" are disabled (but still
+              visible) when there is nothing to review. Rich hover/tap feedback
+              so the panel feels alive instead of flat. */}
+          <div className="grid grid-cols-2 gap-3 mt-8">
+            <motion.button
+              type="button"
+              disabled={pendingCount === 0}
+              onClick={retryPending}
+              whileHover={{ y: -2, scale: pendingCount === 0 ? 1 : 1.02 }}
+              whileTap={{ scale: pendingCount === 0 ? 1 : 0.97 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className={`px-5 py-3 rounded-xl text-sm font-semibold shadow-soft transition-colors flex items-center justify-center gap-2 ${
+                pendingCount === 0
+                  ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
+                  : 'bg-amber-500 text-white hover:bg-amber-600 hover:shadow-lift'
+              }`}
+            >
+              <ListX className="w-4 h-4" /> {t('reward.study.pending')}
+              <span className={`rounded-full px-1.5 text-xs ${pendingCount === 0 ? 'bg-slate-300 dark:bg-sepia-700' : 'bg-white/25'}`}>{pendingCount}</span>
+            </motion.button>
+            <motion.button
+              type="button"
+              disabled={wrongCards.length === 0}
+              onClick={retryWrong}
+              whileHover={{ y: -2, scale: wrongCards.length === 0 ? 1 : 1.02 }}
+              whileTap={{ scale: wrongCards.length === 0 ? 1 : 0.97 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className={`px-5 py-3 rounded-xl text-sm font-semibold shadow-soft transition-colors flex items-center justify-center gap-2 ${
+                wrongCards.length === 0
+                  ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
+                  : 'bg-rose-500 text-white hover:bg-rose-600 hover:shadow-lift'
+              }`}
+            >
+              <RotateCcw className="w-4 h-4" /> {t('reward.retry.wrong')}
+              <span className={`rounded-full px-1.5 text-xs ${wrongCards.length === 0 ? 'bg-slate-300 dark:bg-sepia-700' : 'bg-white/25'}`}>{wrongCards.length}</span>
+            </motion.button>
+
+            <motion.button
+              type="button"
               onClick={() => resetStudy()}
-              className="px-5 py-3 bg-ember-500 text-paper rounded-xl text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              whileHover={{ y: -2, scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="col-span-2 px-5 py-3.5 bg-ember-500 text-paper rounded-xl text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" /> {t('reward.review')}
-            </button>
-            {wrongCards.length > 0 && (
-              <button
-                onClick={retryWrong}
-                className="px-5 py-3 bg-rose-500 text-white text-sm rounded-xl font-semibold hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" /> {t('reward.retry.wrong')}
-              </button>
-            )}
-            {pendingCount > 0 && (
-              <button
-                onClick={retryPending}
-                className="px-5 py-3 bg-amber-500 text-white text-sm rounded-xl font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
-              >
-                <ListX className="w-4 h-4" /> {t('reward.study.pending')} ({pendingCount})
-              </button>
-            )}
-            <button
+            </motion.button>
+
+            <motion.button
+              type="button"
               onClick={() => exportSession(currentSession, 'csv')}
-              className="px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center justify-center gap-2"
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="px-5 py-3 rounded-xl text-sm border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 hover:bg-slate-100 dark:hover:bg-sepia-800 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               {t('export.single')}
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              type="button"
               onClick={() => navigate('/')}
-              className="px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center justify-center gap-2"
+              whileHover={{ y: -2, scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.25 }}
+              className="px-5 py-3 rounded-xl text-sm border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 hover:bg-slate-100 dark:hover:bg-sepia-800 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
             >
               <Upload className="w-4 h-4" /> {t('reward.upload.another')}
-            </button>
+            </motion.button>
           </div>
         </motion.div>
       </div>
