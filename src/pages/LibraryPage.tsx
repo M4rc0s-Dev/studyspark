@@ -180,20 +180,26 @@ const LibraryPage: React.FC = () => {
 
   // Merge cloud sessions with local sessions while avoiding duplicates.
   useEffect(() => {
+    // createdAt may arrive as a Date (from the cloud) or as a string/Date from
+    // the local flashcard store (e.g. after returning from Study), so coerce
+    // defensively to avoid "createdAt.getTime is not a function".
+    const toDate = (v: unknown): Date => (v instanceof Date ? v : new Date(v as string | number))
     const cloud: StudySession[] = cloudSessions.map((s) => ({
       id: s.id,
       title: s.title,
       folder: s.folder || '',
       flashcards: (s.flashcards as StudySession['flashcards']) || [],
-      createdAt: new Date(s.created_at),
+      createdAt: toDate(s.created_at),
       studyMode: (s.study_mode as StudySession['studyMode']) || 'basic',
       timeSpent: s.time_spent || 0,
       score: s.score || 0,
     }))
     const merged = new Map<string, StudySession>()
     cloud.forEach((s) => merged.set(s.id, s))
-    state.sessions.forEach((s) => merged.set(s.id, s))
-    setSessions(Array.from(merged.values()).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()))
+    state.sessions.forEach((s) => merged.set(s.id, { ...s, createdAt: toDate(s.createdAt) }))
+    setSessions(
+      Array.from(merged.values()).sort((a, b) => toDate(a.createdAt).getTime() - toDate(b.createdAt).getTime())
+    )
   }, [cloudSessions, state.sessions])
 
   const replaceSession = (updated: StudySession) => {
@@ -581,10 +587,12 @@ const LibraryPage: React.FC = () => {
       label: t('library.move.short'),
       icon: FolderInput,
       submenu: buildMoveTree((dest) => moveSession(s, dest), {
-        // Exclude the deck's own folder (no-op) AND the folder currently open
-        // in the view — moving a deck into the folder it's already shown in is
-        // meaningless. Every other folder stays selectable.
-        currentLocation: s.folder || '',
+        // Show the WHOLE folder tree as move targets, hiding ONLY the folder
+        // currently open in the view (the one being listed). The deck's own
+        // folder is intentionally NOT pre-excluded, so sibling folders and the
+        // rest of the tree stay visible — moving a deck "into" its own folder is
+        // a harmless no-op, not worth hiding the whole level for.
+        currentLocation: '',
         isDisabled: (dest) => dest === currentPath,
       }),
     },
