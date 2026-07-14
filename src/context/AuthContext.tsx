@@ -265,7 +265,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const resetPassword = useCallback(async (email: string) => {
     if (!supabase) throw new Error('Auth no disponible')
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/confirm`,
+      redirectTo: `${window.location.origin}/reset-password`,
     })
     if (error) throw error
   }, [])

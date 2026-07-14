@@ -86,9 +86,6 @@ const ProfileMenu: React.FC = () => {
             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
           />
         </span>
-        <span className="hidden xl:block text-sm font-medium text-ink-soft dark:text-sepia-200 max-w-[90px] truncate">
-          {profile?.name || user.name}
-        </span>
         <ChevronDown className={`w-4 h-4 text-ink-muted transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 

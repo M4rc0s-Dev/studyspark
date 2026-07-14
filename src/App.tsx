@@ -13,6 +13,7 @@ import LibraryPage from './pages/LibraryPage'
 import NotFoundPage from './pages/NotFoundPage'
 import AuthPage from './pages/AuthPage'
 import ConfirmPage from './pages/ConfirmPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import ContactPage from './pages/ContactPage'
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
                     <Route path="contact" element={<ContactPage />} />
                     <Route path="auth" element={<AuthPage />} />
                     <Route path="auth/confirm" element={<ConfirmPage />} />
+                    <Route path="reset-password" element={<ResetPasswordPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Route>
                 </Routes>

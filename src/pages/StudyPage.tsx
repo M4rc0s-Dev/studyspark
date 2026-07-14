@@ -841,11 +841,20 @@ const StudyPage: React.FC = () => {
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8">
+          {/* Action buttons: a single homogeneous grid so every button is the
+              same height/width/rhythm and nothing clips out of the card. The
+              "pending" button matches the others exactly. */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8">
+            <button
+              onClick={() => resetStudy()}
+              className="px-5 py-3 bg-ember-500 text-paper rounded-xl text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="w-4 h-4" /> {t('reward.review')}
+            </button>
             {wrongCards.length > 0 && (
               <button
                 onClick={retryWrong}
-                className="px-6 py-3 bg-rose-500 text-white rounded-xl font-semibold hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
+                className="px-5 py-3 bg-rose-500 text-white text-sm rounded-xl font-semibold hover:bg-rose-600 transition-colors flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4" /> {t('reward.retry.wrong')}
               </button>
@@ -853,26 +862,20 @@ const StudyPage: React.FC = () => {
             {pendingCount > 0 && (
               <button
                 onClick={retryPending}
-                className="px-6 py-3 bg-amber-500 text-white rounded-xl font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
+                className="px-5 py-3 bg-amber-500 text-white text-sm rounded-xl font-semibold hover:bg-amber-600 transition-colors flex items-center justify-center gap-2"
               >
                 <ListX className="w-4 h-4" /> {t('reward.study.pending')} ({pendingCount})
               </button>
             )}
             <button
-              onClick={() => resetStudy()}
-              className="px-6 py-3 bg-ember-500 text-paper rounded-xl font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" /> {t('reward.review')}
-            </button>
-            <button
               onClick={() => exportSession(currentSession, 'csv')}
-              className="px-6 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center justify-center gap-2"
+              className="px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center justify-center gap-2"
             >
               {t('export.single')}
             </button>
             <button
               onClick={() => navigate('/')}
-              className="px-6 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center justify-center gap-2"
+              className="px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 text-sm rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center justify-center gap-2"
             >
               <Upload className="w-4 h-4" /> {t('reward.upload.another')}
             </button>

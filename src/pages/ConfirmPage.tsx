@@ -98,9 +98,27 @@ const ConfirmPage: React.FC = () => {
       return
     }
 
-    // No recognizable parameters (e.g. a stale/empty deep link, or the OAuth
-    // code was already consumed by the client on load). Don't show a scary
-    // error — just go home, the session will be picked up by AuthContext.
+    // Fallback: the OAuth round-trip sometimes establishes the session on the
+    // client without returning a `code` in the URL (e.g. token already in
+    // storage). In that case, if a guest deck is stashed, restore it now;
+    // otherwise just land on the home page. This prevents the "Google login
+    // loses the deck" bug where the redirect silently dropped the stash.
+    if (supabase) {
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+          if (type !== 'recovery' && consumeGuestCards(navigate, createSession)) return
+          if (type !== 'recovery') navigate(next === 'library' ? '/library' : '/', { replace: true })
+        } else {
+          // No session and nothing to act on: go home (the session will be
+          // picked up by AuthContext if it arrives shortly).
+          navigate('/', { replace: true })
+        }
+      })
+      return
+    }
+
+    // No recognizable parameters (e.g. a stale/empty deep link). Don't show a
+    // scary error — just go home, the session will be picked up by AuthContext.
     navigate('/', { replace: true })
   }, [params, navigate, type])
 

@@ -21,6 +21,7 @@ import {
   Download,
   FolderInput,
   Palette,
+  Loader2,
 } from 'lucide-react'
 import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
@@ -88,13 +89,25 @@ const LibraryPage: React.FC = () => {
   // Load empty folders (persisted locally so empty folders survive).
   const foldersLoaded = useRef(false)
   useEffect(() => {
+    let cancelled = false
     try {
       const raw = localStorage.getItem(FOLDERS_KEY)
-      if (raw) setEmptyFolders(JSON.parse(raw))
+      if (raw && !cancelled) {
+        const parsed = JSON.parse(raw) as string[]
+        // Only mark loaded AFTER we've actually applied the saved value, so a
+        // fast unmount (e.g. the auth gate redirecting) can't persist the
+        // empty initial state and wipe the saved folders.
+        setEmptyFolders(parsed)
+        foldersLoaded.current = true
+      } else {
+        foldersLoaded.current = true
+      }
     } catch {
-      /* ignore */
+      foldersLoaded.current = true
     }
-    foldersLoaded.current = true
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   // Persist empty folders — but ONLY after the initial load has run. On the
@@ -148,6 +161,16 @@ const LibraryPage: React.FC = () => {
     }, 400)
     return () => window.clearTimeout(t)
   }, [loading, user, navigate])
+
+  // While auth is still resolving, show a spinner instead of the empty blue
+  // background (the "stuck on blue, must press F5" bug).
+  if (loading && !user) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-ember-500 animate-spin" />
+      </div>
+    )
+  }
 
   // Merge cloud sessions with local sessions while avoiding duplicates.
   useEffect(() => {
@@ -772,10 +795,10 @@ const LibraryPage: React.FC = () => {
                       <button
                         onClick={() => openPendingSession(s)}
                         title={t('reward.study.pending')}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold shadow-soft hover:bg-amber-600 transition-colors"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold shadow-soft hover:bg-amber-600 transition-colors"
                       >
                         <ListX className="w-4 h-4" /> {t('reward.study.pending')}
-                        <span className="ml-0.5 rounded-full bg-white/25 px-1.5 text-xs">{pendingCountFor(s)}</span>
+                        <span className="rounded-full bg-white/25 px-1.5 text-xs">{pendingCountFor(s)}</span>
                       </button>
                     )}
                   </div>
