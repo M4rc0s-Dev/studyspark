@@ -4,8 +4,10 @@ import { Menu, X, Home, Globe, User, LogOut, Settings, BookOpen, MessageCircle, 
 import { useLanguage } from '../../context/LanguageContext'
 import { useAuth } from '../../context/AuthContext'
 import { useTheme } from '../../context/ThemeContext'
+import { useFlashcardStore } from '../../context/FlashcardContext'
 import ProfileMenu from './ProfileMenu'
 import Chatbot from '../Chatbot/Chatbot'
+import ConfirmDialog from './ConfirmDialog'
 
 const KOFI_URL = 'https://ko-fi.com/mvalera_dev'
 
@@ -16,6 +18,17 @@ const Layout: React.FC = () => {
   const { t, toggle, lang } = useLanguage()
   const { user, profile, signOut } = useAuth()
   const { theme, toggle: toggleTheme } = useTheme()
+  const { state: flashState } = useFlashcardStore()
+  const [confirmLogout, setConfirmLogout] = useState(false)
+
+  // Sign out immediately, or warn first if a study session is in progress.
+  const requestLogout = () => {
+    if (flashState.currentSession && flashState.currentSession.id !== 'demo') {
+      setConfirmLogout(true)
+    } else {
+      signOut()
+    }
+  }
 
   const navigation = [
     { name: t('nav.home'), href: '/', icon: Home },
@@ -29,12 +42,9 @@ const Layout: React.FC = () => {
       {/* Top navbar */}
       <header className="sticky top-0 z-50 bg-paper/85 dark:bg-[#0b1220]/85 backdrop-blur-md border-b border-slate-200/70 dark:border-sepia-800/70">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          {/* 3-column grid: logo | centered nav | right cluster. Each lives in
-              its own cell so the nav is always perfectly centered and the
-              buttons can never overlap or stack on top of each other. */}
-          <div className="grid grid-cols-[auto_1fr_auto] items-center h-16 gap-2">
-            {/* Logo (left cell) */}
-            <Link to="/" className="flex items-center gap-2 justify-self-start shrink-0">
+          <div className="relative flex items-center h-16">
+            {/* Logo (left) */}
+            <Link to="/" className="flex items-center gap-2 shrink-0">
               <span className="w-9 h-9 rounded-xl bg-ink dark:bg-sepia-100 flex items-center justify-center text-paper dark:text-ink font-display font-bold text-lg shadow-soft">
                 S
               </span>
@@ -43,10 +53,10 @@ const Layout: React.FC = () => {
               </span>
             </Link>
 
-            {/* Centered desktop nav (middle cell). "Mi biblioteca" requires a
-                session, so without one it points at sign-in (and returns here
-                after logging in). */}
-            <nav className="hidden md:flex items-center justify-center gap-1 min-w-0">
+            {/* Centered desktop nav: absolutely positioned at the horizontal
+                center of the header so the buttons stay perfectly centered
+                regardless of how wide the logo / right cluster are. */}
+            <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center justify-center gap-1">
               {navigation.map((item) => {
                 const isActive = location.pathname === item.href
                 const href = item.href === '/library' && !user ? '/auth?next=library' : item.href
@@ -67,7 +77,7 @@ const Layout: React.FC = () => {
             </nav>
 
             {/* Right cluster: theme + language + ko-fi + login/profile + mobile button. */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-3 justify-self-end shrink-0 flex-nowrap min-w-0">
+            <div className="ml-auto flex items-center gap-1.5 sm:gap-2 lg:gap-3 shrink-0 flex-nowrap min-w-0">
               <button
                 onClick={toggleTheme}
                 className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-slate-200 dark:border-sepia-700 text-ink-soft dark:text-sepia-300 hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors shrink-0"
@@ -148,7 +158,7 @@ const Layout: React.FC = () => {
             </a>
             {user && (
               <button
-                onClick={() => { signOut(); setIsSidebarOpen(false) }}
+                onClick={() => { setIsSidebarOpen(false); requestLogout() }}
                 className="w-full mt-2 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-slate-200 dark:border-sepia-700 text-ink-soft dark:text-sepia-200 font-medium"
               >
                 <LogOut className="w-4 h-4" />
@@ -182,6 +192,20 @@ const Layout: React.FC = () => {
 
       {/* Chatbot */}
       <Chatbot />
+
+      {/* Warn that signing out discards an in-progress study session. */}
+      <ConfirmDialog
+        open={confirmLogout}
+        title={t('profile.logout')}
+        message={t('profile.logout.warn')}
+        confirmLabel={t('profile.logout')}
+        destructive={false}
+        onConfirm={() => {
+          setConfirmLogout(false)
+          signOut()
+        }}
+        onCancel={() => setConfirmLogout(false)}
+      />
 
       {/* Footer */}
       <footer className="bg-paper-sunken dark:bg-[#0b1220] border-t border-slate-200 dark:border-sepia-800 mt-16 transition-colors">

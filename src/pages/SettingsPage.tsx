@@ -26,11 +26,13 @@ const defaultModes: { id: StudyMode; icon: typeof Brain; key: string }[] = [
 const SettingsPage: React.FC = () => {
   const navigate = useNavigate()
   const { t, lang, toggle } = useLanguage()
-  const { user, profile, sessions, updateAvatar, updatePassword, reauthenticate } = useAuth()
+  const { user, profile, sessions, loading, updateAvatar, updatePassword, reauthenticate, resetPassword } = useAuth()
   const { prefs, setPrefs, resetLocalProgress } = useSettings()
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [avatarSeed, setAvatarSeed] = useState(() => profile?.avatar || AVATAR_SEEDS[0])
   const [showPw, setShowPw] = useState(false)
+  const [pwResetSent, setPwResetSent] = useState(false)
+  const [pwResetBusy, setPwResetBusy] = useState(false)
   const [pwBusy, setPwBusy] = useState(false)
   const [oldPw, setOldPw] = useState('')
   const [newPw, setNewPw] = useState('')
@@ -41,11 +43,11 @@ const SettingsPage: React.FC = () => {
     if (profile?.avatar) setAvatarSeed(profile.avatar)
   }, [profile?.avatar])
 
-  // This page is account-only. If the session ends (e.g. the user signs out
-  // from right here), send them to sign in instead of the home page.
+  // This page is account-only. Wait until auth finishes loading so we don't
+  // bounce a still-loading (valid) session to the login screen on refresh.
   useEffect(() => {
-    if (!user) navigate('/auth', { replace: true })
-  }, [user, navigate])
+    if (!loading && !user) navigate('/auth', { replace: true })
+  }, [loading, user, navigate])
 
   const handleAvatarChange = async (seed: string) => {
     setAvatarSeed(seed)
@@ -377,9 +379,38 @@ const SettingsPage: React.FC = () => {
                 />
               </div>
 
+              {/* Forgot password: sends a reset link to the account email. */}
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-sepia-700">
+                {pwResetSent ? (
+                  <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                    <Check className="w-4 h-4" /> {t('auth.forgot.sent')}
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={pwResetBusy}
+                    onClick={async () => {
+                      if (!user?.email) return
+                      setPwResetBusy(true)
+                      try {
+                        await resetPassword(user.email)
+                        setPwResetSent(true)
+                      } catch (err: any) {
+                        toast.error(err?.message || 'No se pudo enviar el correo')
+                      } finally {
+                        setPwResetBusy(false)
+                      }
+                    }}
+                    className="text-sm text-ember-600 dark:text-ember-400 hover:underline disabled:opacity-50"
+                  >
+                    {t('auth.forgot')}
+                  </button>
+                )}
+              </div>
+
               <div className="mt-5 flex justify-end gap-3">
                 <button
-                  onClick={() => { setShowPw(false); setOldPw(''); setNewPw(''); setConfirmPw('') }}
+                  onClick={() => { setShowPw(false); setOldPw(''); setNewPw(''); setConfirmPw(''); setPwResetSent(false) }}
                   className="px-4 py-2.5 rounded-xl border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 text-sm font-medium hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
                 >
                   {t('config.cancel')}

@@ -13,6 +13,7 @@ import { useSettings } from '../context/SettingsContext'
 import { toast } from 'react-hot-toast'
 import { saveSessionToSupabase, loadSessionFromSupabase, updateSessionMeta, deleteSessionFromSupabase } from '../lib/sessions'
 import ConfirmDialog from '../components/Layout/ConfirmDialog'
+import FolderTreePicker from '../components/Layout/FolderTreePicker'
 import { exportSession } from '../lib/export'
 import { xpForSession } from '../lib/leveling'
 import { sampleDeck } from '../data/sampleDeck'
@@ -44,9 +45,12 @@ import {
   Library as LibraryIcon,
   FolderInput,
   Trash2,
+  Palette,
 } from 'lucide-react'
+import { COLOR_TOKENS, colorClasses } from '../lib/colors'
 
 const STUDY_STATE_KEY = 'studyspark.study.state'
+const STUDY_SESSION_KEY = 'studyspark.study.session'
 
 const StudyPage: React.FC = () => {
   const { sessionId } = useParams<{ sessionId: string }>()
@@ -98,6 +102,17 @@ const StudyPage: React.FC = () => {
     }
   }, [currentCardIndex, elapsedTime, cardTimers, answered, isCorrect, completed, isPaused, currentSession])
 
+  // Persist the in-progress deck itself so a reload / Google-OAuth round-trip
+  // can restore it (the store is in-memory and is wiped on full navigation).
+  useEffect(() => {
+    if (!currentSession || currentSession.id === 'demo' || !didInit.current) return
+    try {
+      sessionStorage.setItem(STUDY_SESSION_KEY, JSON.stringify(currentSession))
+    } catch {
+      /* ignore */
+    }
+  }, [currentSession])
+
   // A config passed through navigation state means the user just started a
   // brand-new study session from the pre-study modal. In that case we must NOT
   // restore the persisted state of a previous session (which could carry
@@ -143,6 +158,22 @@ const StudyPage: React.FC = () => {
       }
     } catch {
       /* ignore */
+    }
+    // After a page reload / returning from Google OAuth, restore the in-progress
+    // deck so the user can continue exactly where they left off (point 4). We
+    // only do this when no deck is already loaded and this isn't a fresh start.
+    if (!isFreshStart && !currentSession) {
+      try {
+        const rawS = sessionStorage.getItem(STUDY_SESSION_KEY)
+        if (rawS) {
+          const savedSession = JSON.parse(rawS) as StudySession
+          if (savedSession && savedSession.id && savedSession.id !== 'demo') {
+            setCurrentSession(savedSession)
+          }
+        }
+      } catch {
+        /* ignore */
+      }
     }
   }, [])
 
@@ -650,6 +681,59 @@ const StudyPage: React.FC = () => {
             <p className="mt-6 text-sm text-ink-muted dark:text-sepia-300">{t('auth.login.desc')}</p>
           )}
 
+          {/* Color picker for the deck */}
+          {user && currentSession && currentSession.id !== 'demo' && (
+            <div className="mt-6 rounded-2xl border border-slate-200 dark:border-sepia-700 p-4 text-left">
+              <p className="text-sm font-semibold text-ink-soft dark:text-sepia-200 mb-3 flex items-center gap-2">
+                <Palette className="w-4 h-4 text-ember-500" /> {t('library.style')}
+              </p>
+              <div className="flex items-center gap-3">
+                {/* No color option */}
+                <button
+                  onClick={() => {
+                    if (currentSession && currentSession.id !== 'demo') {
+                      setCurrentSession({ ...currentSession, color: undefined })
+                      if (user) {
+                        const updatedSession: StudySession = { ...currentSession, color: undefined }
+                        saveSessionToSupabase(updatedSession)
+                      }
+                      updateSessionMeta(currentSession.id, { color: undefined })
+                      toast.success(t('library.color.saved'))
+                    }
+                  }}
+                  title={t('library.color.none')}
+                  className={`w-8 h-8 rounded-full border border-slate-300 dark:border-sepia-600 flex items-center justify-center ${
+                    !currentSession?.color ? 'ring-2 ring-offset-1 ring-ember-500' : ''
+                  }`}
+                >
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+                {COLOR_TOKENS.map((c) => {
+                  const cc = colorClasses(c)
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => {
+                        if (currentSession && currentSession.id !== 'demo') {
+                          setCurrentSession({ ...currentSession, color: c })
+                          if (user) {
+                            const updatedSession: StudySession = { ...currentSession, color: c }
+                            saveSessionToSupabase(updatedSession)
+                          }
+                          updateSessionMeta(currentSession.id, { color: c })
+                          toast.success(t('library.color.saved'))
+                        }
+                      }}
+                      className={`w-8 h-8 rounded-full ${cc?.swatch} ${
+                        currentSession?.color === c ? 'ring-2 ring-offset-1 ring-gray-500 dark:ring-offset-gray-900' : ''
+                      }`}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Save to a folder — only offered when the deck is NOT yet saved (point 2) */}
           {user && currentSession && currentSession.id !== 'demo' && !savedToLibrary && (
             <div className="mt-6 rounded-2xl border border-slate-200 dark:border-sepia-700 p-4 text-left">
@@ -662,16 +746,13 @@ const StudyPage: React.FC = () => {
                 </p>
               ) : (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <select
+                  <FolderTreePicker
+                    allFolderPaths={availableFolders}
                     value={saveFolder}
-                    onChange={(e) => setSaveFolder(e.target.value)}
-                    className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 dark:border-sepia-600 dark:bg-sepia-800 dark:text-sepia-50 text-sm outline-none focus:ring-2 focus:ring-ember-500"
-                  >
-                    <option value="">SparkDrive</option>
-                    {availableFolders.map((f) => (
-                      <option key={f} value={f}>{f}</option>
-                    ))}
-                  </select>
+                    onPick={setSaveFolder}
+                    rootLabel={t('library.root') || 'SparkDrive'}
+                    className="flex-1"
+                  />
                   <button
                     onClick={handleSaveToFolder}
                     className="px-5 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all flex items-center justify-center gap-2"

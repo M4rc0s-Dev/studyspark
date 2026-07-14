@@ -17,9 +17,9 @@ interface LoadingScreenProps {
 // free AI tier is unpredictable, so this is a friendly approximation rather
 // than a real per-step progress bar.
 const STAGES = [
-  { key: 'loading.step.reading', icon: FileText, until: 6000 },
-  { key: 'loading.step.thinking', icon: Brain, until: 25000 },
-  { key: 'loading.step.writing', icon: PenLine, until: 60000 },
+  { key: 'loading.step.reading', icon: FileText, until: 10000 },
+  { key: 'loading.step.thinking', icon: Brain, until: 36000 },
+  { key: 'loading.step.writing', icon: PenLine, until: 90000 },
   { key: 'loading.step.almost', icon: Sparkles, until: Infinity },
 ] as const
 

@@ -16,11 +16,12 @@ const ProfileMenu: React.FC = () => {
   const [open, setOpen] = useState(false)
   const [showSessions, setShowSessions] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<SessionRow | null>(null)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const { t } = useLanguage()
   const { user, profile, sessions, signOut, refreshSessions } = useAuth()
-  const { removeSession } = useFlashcardStore()
+  const { state, removeSession } = useFlashcardStore()
 
   // Delete a session from the cloud and local store, mirroring the Library page.
   const handleDeleteSession = async (s: SessionRow) => {
@@ -182,7 +183,16 @@ const ProfileMenu: React.FC = () => {
                 </button>
                 <div className="my-1 border-t border-paper-sunken dark:border-[#33465c]" />
                 <button
-                  onClick={() => { setOpen(false); signOut() }}
+                  onClick={() => {
+                    setOpen(false)
+                    // Warn before signing out if a study session is in progress,
+                    // since logging out discards its (unsaved) progress.
+                    if (state.currentSession && state.currentSession.id !== 'demo') {
+                      setConfirmLogout(true)
+                    } else {
+                      signOut()
+                    }
+                  }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors text-left"
                 >
                   <LogOut className="w-5 h-5 text-rose-500" />
@@ -247,6 +257,20 @@ const ProfileMenu: React.FC = () => {
           if (sessionToDelete) handleDeleteSession(sessionToDelete)
         }}
         onCancel={() => setSessionToDelete(null)}
+      />
+
+      {/* Warn that signing out discards an in-progress study session. */}
+      <ConfirmDialog
+        open={confirmLogout}
+        title={t('profile.logout')}
+        message={t('profile.logout.warn')}
+        confirmLabel={t('profile.logout')}
+        destructive={false}
+        onConfirm={() => {
+          setConfirmLogout(false)
+          signOut()
+        }}
+        onCancel={() => setConfirmLogout(false)}
       />
     </div>
   )

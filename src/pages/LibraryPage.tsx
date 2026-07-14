@@ -27,6 +27,7 @@ import { useFlashcardStore } from '../context/FlashcardContext'
 import { updateSessionMeta, deleteSessionFromSupabase } from '../lib/sessions'
 import ConfirmDialog from '../components/Layout/ConfirmDialog'
 import ContextMenu, { type ContextMenuState, type ContextMenuItem } from '../components/Layout/ContextMenu'
+import { buildMoveTree as buildFolderTree } from '../lib/folderTree'
 import { COLOR_TOKENS, colorClasses } from '../lib/colors'
 import { exportSession } from '../lib/export'
 import type { StudySession } from '../types'
@@ -53,7 +54,7 @@ const fade = { hidden: { opacity: 0, y: 24 }, show: { opacity: 1, y: 0 } }
 const LibraryPage: React.FC = () => {
   const navigate = useNavigate()
   const { t } = useLanguage()
-  const { user, sessions: cloudSessions, refreshSessions } = useAuth()
+  const { user, sessions: cloudSessions, loading, refreshSessions } = useAuth()
   const { state, setCurrentSession, updateSession, removeSession } = useFlashcardStore()
 
   const [sessions, setSessions] = useState<StudySession[]>([])
@@ -84,6 +85,7 @@ const LibraryPage: React.FC = () => {
   const dragImageRef = useRef<HTMLDivElement | null>(null)
 
   // Load empty folders (persisted locally so empty folders survive).
+  const foldersLoaded = useRef(false)
   useEffect(() => {
     try {
       const raw = localStorage.getItem(FOLDERS_KEY)
@@ -91,9 +93,15 @@ const LibraryPage: React.FC = () => {
     } catch {
       /* ignore */
     }
+    foldersLoaded.current = true
   }, [])
 
+  // Persist empty folders — but ONLY after the initial load has run. On the
+  // first render `emptyFolders` is []; persisting it then would wipe the
+  // saved folders before the load effect applies them (and a quick unmount,
+  // e.g. the auth gate redirecting, would make the wipe permanent).
   useEffect(() => {
+    if (!foldersLoaded.current) return
     try {
       localStorage.setItem(FOLDERS_KEY, JSON.stringify(emptyFolders))
     } catch {
@@ -124,12 +132,11 @@ const LibraryPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // Library is account-only. Folders/sessions are tied to the signed-in user,
-  // so if the session ends (or they open it without a session) we send them to
-  // sign in — never to an empty, half-broken library.
+  // Library is account-only. Wait for auth to finish loading so a still-
+  // resolving session on refresh isn't mistaken for "logged out".
   useEffect(() => {
-    if (!user) navigate('/auth?next=library', { replace: true })
-  }, [user, navigate])
+    if (!loading && !user) navigate('/auth?next=library', { replace: true })
+  }, [loading, user, navigate])
 
   // Merge cloud sessions with local sessions while avoiding duplicates.
   useEffect(() => {
@@ -450,79 +457,27 @@ const LibraryPage: React.FC = () => {
   )
 
   // ----- Context menus (right click) -----
-  // Build the "Move" submenu as a real folder TREE. We compute box-drawing
-  // connectors (├── │ └──) for every entry so siblings always align
-  // vertically — the indentation is encoded by the connector string, not by
-  // depth-based padding, which previously caused a "staircase" effect where
-  // each item shifted further right than its sibling.
+  // Build the "Move" submenu as a real folder TREE. Delegates to the shared
+  // `buildMoveTree` in lib/folderTree so this matches the FolderTreePicker
+  // used on the study completion screen exactly.
   const buildMoveTree = (
     onPick: (dest: string) => void,
     opts: { currentLocation: string; isDisabled?: (path: string) => boolean }
-  ): ContextMenuItem[] => {
-    // Root destination (SparkDrive) — shown only when moving INTO root is valid.
-    const items: ContextMenuItem[] = []
-    const rootDisabled = opts.currentLocation === '' || (opts.isDisabled?.('') ?? false)
-    if (!rootDisabled) {
-      items.push({ label: DRIVE_ROOT_LABEL, icon: Home, treePrefix: '', onClick: () => onPick('') })
-    }
-
-    // Valid destination folders (exclude invalid ones up front so the tree
-    // structure reflects only what the user can actually pick).
-    const valid = allFolderPaths.filter((p) => {
-      const disabled = opts.currentLocation === p || (opts.isDisabled?.(p) ?? false)
-      return !disabled
-    })
-
-    // Build the tree from a sorted list of paths (shallow-first), tracking each
-    // folder's children so we can emit connectors correctly.
-    const childrenMap = new Map<string, string[]>()
-    const roots: string[] = []
-    const sorted = [...valid].sort((a, b) => a.localeCompare(b))
-    sorted.forEach((path) => {
-      const parent = parentPath(path)
-      if (!parent) {
-        roots.push(path)
-      } else {
-        if (!childrenMap.has(parent)) childrenMap.set(parent, [])
-        childrenMap.get(parent)!.push(path)
-      }
-    })
-
-    // Depth-first walk. `prefix` is the indentation drawn so far for ANCESTORS,
-    // and `isLastAt` records, per ancestor level, whether that ancestor was the
-    // last child (so we draw "│   " vs "    ").
-    const walk = (path: string, prefix: string, isLastAt: boolean[]) => {
-      const kids = (childrenMap.get(path) || []).slice().sort((a, b) => folderName(a).localeCompare(folderName(b)))
-      kids.forEach((child, i) => {
-        const isLast = i === kids.length - 1
-        const connector = isLast ? '└── ' : '├── '
-        // Ancestor continuation: "│   " if the ancestor continues, "    " if it ended.
-        const inherited = isLastAt.map((last) => (last ? '    ' : '│   ')).join('')
-        items.push({
-          label: folderName(child),
-          icon: Folder,
-          treePrefix: inherited + connector,
-          onClick: () => onPick(child),
-        })
-        walk(child, prefix + connector, [...isLastAt, isLast])
-      })
-    }
-
-    const sortedRoots = roots.slice().sort((a, b) => folderName(a).localeCompare(folderName(b)))
-    sortedRoots.forEach((root, i) => {
-      const isLast = i === sortedRoots.length - 1
-      const connector = isLast ? '└── ' : '├── '
-      items.push({
-        label: folderName(root),
-        icon: Folder,
-        treePrefix: connector,
-        onClick: () => onPick(root),
-      })
-      walk(root, connector, [isLast])
-    })
-
-    return items.length > 0 ? items : [{ label: '—', onClick: () => {} }]
-  }
+  ): ContextMenuItem[] =>
+    buildFolderTree(allFolderPaths, {
+      currentLocation: opts.currentLocation,
+      isDisabled: opts.isDisabled,
+      rootLabel: DRIVE_ROOT_LABEL,
+      homeIcon: Home,
+      folderIcon: Folder,
+    }).map((it) => ({
+      ...it,
+      // `onClick` is a no-op placeholder in the shared builder; bind it here.
+      onClick: () => {
+        const chosen = it.treePrefix === '' && it.label === DRIVE_ROOT_LABEL ? '' : it.label
+        onPick(chosen)
+      },
+    }))
 
   // Items shared by the session right-click menu and the "⋮" button menu.
   const sessionMenuItems = (s: StudySession): ContextMenuItem[] => [
