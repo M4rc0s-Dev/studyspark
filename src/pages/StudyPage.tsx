@@ -10,10 +10,7 @@ import { useFlashcardStore } from '../context/FlashcardContext'
 import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
-import { toast } from 'react-hot-toast'
-import { saveSessionToSupabase, loadSessionFromSupabase, updateSessionMeta, deleteSessionFromSupabase } from '../lib/sessions'
-import ConfirmDialog from '../components/Layout/ConfirmDialog'
-import FolderTreePicker from '../components/Layout/FolderTreePicker'
+import { saveSessionToSupabase, loadSessionFromSupabase } from '../lib/sessions'
 import { exportSession } from '../lib/export'
 import { xpForSession } from '../lib/leveling'
 import { sampleDeck } from '../data/sampleDeck'
@@ -43,11 +40,7 @@ import {
   ChevronDown,
   Coffee,
   Library as LibraryIcon,
-  FolderInput,
-  Trash2,
-  Palette,
 } from 'lucide-react'
-import { COLOR_TOKENS, colorClasses } from '../lib/colors'
 
 const STUDY_STATE_KEY = 'studyspark.study.state'
 const STUDY_SESSION_KEY = 'studyspark.study.session'
@@ -57,11 +50,11 @@ const StudyPage: React.FC = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { t } = useLanguage()
-  const { user, profile, addXp, sessions: cloudSessions } = useAuth()
+  const { user, profile, addXp } = useAuth()
   const { prefs } = useSettings()
 
   // Session from store (needed early for persistence effects).
-  const { state, loadSession, setCurrentSession, removeSession } = useFlashcardStore()
+  const { state, setCurrentSession } = useFlashcardStore()
   const currentSession = state.currentSession
 
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
@@ -192,12 +185,6 @@ const StudyPage: React.FC = () => {
   const [configOpen, setConfigOpen] = useState(false)
   const [demoPending, setDemoPending] = useState(false)
   const [showWrongList, setShowWrongList] = useState(false)
-  // Folder chosen on the completion screen to file this deck under (''=root).
-  const [saveFolder, setSaveFolder] = useState<string>('')
-  const [savedToLibrary, setSavedToLibrary] = useState(false)
-  // Confirmation before leaving the results screen in a way that discards the
-  // current (unsaved) deck (point 2): "Subir otro archivo" and "Desechar".
-  const [confirmDiscard, setConfirmDiscard] = useState(false)
 
   const timedTick = useRef<number | null>(null)
 
@@ -525,45 +512,6 @@ const StudyPage: React.FC = () => {
     setConfig((c) => ({ ...c, mode }))
   }
 
-  // Available folders for the "save to folder" picker on the completion screen:
-  // folders that already contain sessions (cloud + in-memory) plus locally
-  // created empty folders. Reading the cloud sessions too guarantees the picker
-  // shows the user's real folders even right after an OAuth login, when the
-  // in-memory store may still be empty.
-  const availableFolders = useMemo(() => {
-    const set = new Set<string>()
-    state.sessions.forEach((s) => { if (s.folder) set.add(s.folder) })
-    cloudSessions.forEach((s) => { if (s.folder) set.add(s.folder) })
-    try {
-      const raw = localStorage.getItem('studyspark.folders.v1')
-      if (raw) (JSON.parse(raw) as string[]).forEach((p) => p && set.add(p))
-    } catch {
-      /* ignore */
-    }
-    return Array.from(set).sort((a, b) => a.localeCompare(b))
-  }, [state.sessions, cloudSessions])
-
-  // Save the finished deck into the chosen folder (persists to the cloud).
-  const handleSaveToFolder = useCallback(() => {
-    if (!currentSession) return
-    const updated: StudySession = { ...currentSession, folder: saveFolder }
-    setCurrentSession(updated)
-    saveSessionToSupabase(updated)
-    updateSessionMeta(updated.id, { folder: saveFolder })
-    setSavedToLibrary(true)
-    toast.success(t('reward.saved'))
-  }, [currentSession, saveFolder, setCurrentSession, t])
-
-  // Discard the finished deck (remove from cloud + local store) and go home.
-  const handleDiscardSession = useCallback(async () => {
-    if (currentSession) {
-      await deleteSessionFromSupabase(currentSession.id)
-      removeSession(currentSession.id)
-    }
-    toast.success(t('reward.discarded'))
-    navigate('/')
-  }, [currentSession, removeSession, navigate, t])
-
   // Keyboard shortcuts: space = flip, arrows = navigate.
   useEffect(() => {
     if (!currentSession || completed) return
@@ -614,13 +562,13 @@ const StudyPage: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <button
               onClick={() => navigate('/')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
+              className="btn-pop inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift transition-all"
             >
               <Upload className="w-5 h-5" /> {t('study.empty.cta')}
             </button>
             <button
               onClick={() => navigate('/library')}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 font-semibold hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
+              className="btn-pop inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 font-semibold hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
             >
               <LibraryIcon className="w-5 h-5" /> {t('study.empty.library')}
             </button>
@@ -723,95 +671,6 @@ const StudyPage: React.FC = () => {
             <p className="mt-6 text-sm text-ink-muted dark:text-sepia-300">{t('auth.login.desc')}</p>
           )}
 
-          {/* Color picker for the deck */}
-          {user && currentSession && currentSession.id !== 'demo' && (
-            <div className="mt-6 rounded-2xl border border-slate-200 dark:border-sepia-700 p-4 text-left">
-              <p className="text-sm font-semibold text-ink-soft dark:text-sepia-200 mb-3 flex items-center gap-2">
-                <Palette className="w-4 h-4 text-ember-500" /> {t('library.style')}
-              </p>
-              <div className="flex items-center gap-3">
-                {/* No color option */}
-                <button
-                  onClick={() => {
-                    if (currentSession && currentSession.id !== 'demo') {
-                      setCurrentSession({ ...currentSession, color: undefined })
-                      if (user) {
-                        const updatedSession: StudySession = { ...currentSession, color: undefined }
-                        saveSessionToSupabase(updatedSession)
-                      }
-                      updateSessionMeta(currentSession.id, { color: undefined })
-                      toast.success(t('library.color.saved'))
-                    }
-                  }}
-                  title={t('library.color.none')}
-                  className={`w-8 h-8 rounded-full border border-slate-300 dark:border-sepia-600 flex items-center justify-center ${
-                    !currentSession?.color ? 'ring-2 ring-offset-1 ring-ember-500' : ''
-                  }`}
-                >
-                  <X className="w-4 h-4 text-gray-400" />
-                </button>
-                {COLOR_TOKENS.map((c) => {
-                  const cc = colorClasses(c)
-                  return (
-                    <button
-                      key={c}
-                      onClick={() => {
-                        if (currentSession && currentSession.id !== 'demo') {
-                          setCurrentSession({ ...currentSession, color: c })
-                          if (user) {
-                            const updatedSession: StudySession = { ...currentSession, color: c }
-                            saveSessionToSupabase(updatedSession)
-                          }
-                          updateSessionMeta(currentSession.id, { color: c })
-                          toast.success(t('library.color.saved'))
-                        }
-                      }}
-                      className={`w-8 h-8 rounded-full ${cc?.swatch} ${
-                        currentSession?.color === c ? 'ring-2 ring-offset-1 ring-gray-500 dark:ring-offset-gray-900' : ''
-                      }`}
-                    />
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Save to a folder — only offered when the deck is NOT yet saved (point 2) */}
-          {user && currentSession && currentSession.id !== 'demo' && !savedToLibrary && (
-            <div className="mt-6 rounded-2xl border border-slate-200 dark:border-sepia-700 p-4 text-left">
-              <p className="text-sm font-semibold text-ink-soft dark:text-sepia-200 mb-3 flex items-center gap-2">
-                <FolderInput className="w-4 h-4 text-ember-500" /> {t('reward.save.title')}
-              </p>
-              {savedToLibrary ? (
-                <p className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                  <Check className="w-4 h-4" /> {t('reward.saved')}
-                </p>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <FolderTreePicker
-                    allFolderPaths={availableFolders}
-                    value={saveFolder}
-                    onPick={setSaveFolder}
-                    rootLabel={t('library.root') || 'SparkDrive'}
-                    className="flex-1"
-                  />
-                  <button
-                    onClick={handleSaveToFolder}
-                    className="px-5 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all flex items-center justify-center gap-2"
-                  >
-                    <FolderInput className="w-4 h-4" /> {t('reward.save.cta')}
-                  </button>
-                  <button
-                    onClick={handleDiscardSession}
-                    className="px-5 py-2.5 rounded-xl border border-rose-300 dark:border-rose-500/40 text-rose-600 dark:text-rose-400 text-sm font-semibold hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" /> {t('reward.discard')}
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* List of missed cards (collapsible) */}
           {wrongCards.length > 0 && (
             <div className="mt-6 text-left">
@@ -856,11 +715,11 @@ const StudyPage: React.FC = () => {
               type="button"
               disabled={pendingCount === 0}
               onClick={retryPending}
-              whileHover={{ y: -2, scale: pendingCount === 0 ? 1 : 1.02 }}
-              whileTap={{ scale: pendingCount === 0 ? 1 : 0.97 }}
+              whileHover={{ y: -2, scale: pendingCount === 0 ? 1 : 1.04 }}
+              whileTap={{ scale: pendingCount === 0 ? 1 : 0.96 }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
+              transition={{ delay: 0.05, type: 'spring', stiffness: 300, damping: 20 }}
               className={`px-5 py-3 rounded-xl text-sm font-semibold shadow-soft transition-colors flex items-center justify-center gap-2 ${
                 pendingCount === 0
                   ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
@@ -874,11 +733,11 @@ const StudyPage: React.FC = () => {
               type="button"
               disabled={wrongCards.length === 0}
               onClick={retryWrong}
-              whileHover={{ y: -2, scale: wrongCards.length === 0 ? 1 : 1.02 }}
-              whileTap={{ scale: wrongCards.length === 0 ? 1 : 0.97 }}
+              whileHover={{ y: -2, scale: wrongCards.length === 0 ? 1 : 1.04 }}
+              whileTap={{ scale: wrongCards.length === 0 ? 1 : 0.96 }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
+              transition={{ delay: 0.1, type: 'spring', stiffness: 300, damping: 20 }}
               className={`px-5 py-3 rounded-xl text-sm font-semibold shadow-soft transition-colors flex items-center justify-center gap-2 ${
                 wrongCards.length === 0
                   ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
@@ -892,12 +751,12 @@ const StudyPage: React.FC = () => {
             <motion.button
               type="button"
               onClick={() => resetStudy()}
-              whileHover={{ y: -2, scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ y: -2, scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="col-span-2 px-5 py-3.5 bg-ember-500 text-paper rounded-xl text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              transition={{ delay: 0.15, type: 'spring', stiffness: 300, damping: 20 }}
+              className="col-span-2 px-5 py-3.5 bg-ember-500 text-paper rounded-xl text-sm font-bold shadow-soft hover:shadow-lift transition-all flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" /> {t('reward.review')}
             </motion.button>
@@ -905,24 +764,24 @@ const StudyPage: React.FC = () => {
             <motion.button
               type="button"
               onClick={() => exportSession(currentSession, 'csv')}
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ y: -2, scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="px-5 py-3 rounded-xl text-sm border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 hover:bg-slate-100 dark:hover:bg-sepia-800 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              transition={{ delay: 0.2, type: 'spring', stiffness: 300, damping: 20 }}
+              className="px-5 py-3 rounded-xl text-sm border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 hover:bg-slate-100 dark:hover:bg-sepia-800 transition-all flex items-center justify-center gap-2"
             >
               {t('export.single')}
             </motion.button>
             <motion.button
               type="button"
               onClick={() => navigate('/')}
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ y: -2, scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="px-5 py-3 rounded-xl text-sm border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 hover:bg-slate-100 dark:hover:bg-sepia-800 hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+              transition={{ delay: 0.25, type: 'spring', stiffness: 300, damping: 20 }}
+              className="px-5 py-3 rounded-xl text-sm border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 hover:bg-slate-100 dark:hover:bg-sepia-800 transition-all flex items-center justify-center gap-2"
             >
               <Upload className="w-4 h-4" /> {t('reward.upload.another')}
             </motion.button>
@@ -1041,7 +900,7 @@ const StudyPage: React.FC = () => {
               </button>
               <button
                 onClick={handleNext}
-                className="inline-flex items-center gap-1 px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="btn-pop inline-flex items-center gap-1 px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 {t('study.next')} <ChevronRight className="w-4 h-4" />
               </button>
@@ -1061,21 +920,21 @@ const StudyPage: React.FC = () => {
                 {!isLast ? (
                   <button
                     onClick={handleNext}
-                    className="px-6 py-3 bg-ember-500 text-paper rounded-xl font-bold hover:shadow-lift hover:-translate-y-0.5 transition-all"
+                    className="btn-pop px-6 py-3 bg-ember-500 text-paper rounded-xl font-bold hover:shadow-lift transition-all"
                   >
                     {t('study.next')} <ChevronRight className="w-4 h-4 inline" />
                   </button>
                 ) : (
                   <button
                     onClick={finishSession}
-                    className="px-6 py-3 bg-ember-500 text-paper rounded-xl font-bold hover:shadow-lift hover:-translate-y-0.5 transition-all"
+                    className="btn-pop px-6 py-3 bg-ember-500 text-paper rounded-xl font-bold hover:shadow-lift transition-all"
                   >
                     {t('reward.finish')} <Trophy className="w-4 h-4 inline" />
                   </button>
                 )}
                 <button
                   onClick={() => resetStudy()}
-                  className="px-6 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center"
+                  className="btn-pop px-6 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors flex items-center"
                 >
                   <RotateCcw className="w-4 h-4 mr-2" /> {t('study.restart')}
                 </button>
@@ -1087,19 +946,19 @@ const StudyPage: React.FC = () => {
               <div className="flex justify-center gap-3">
                 <button
                   onClick={() => handleAnswer(true)}
-                  className="flex-1 px-5 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center"
+                  className="btn-pop flex-1 px-5 py-3 bg-emerald-600 text-white rounded-xl font-semibold hover:bg-emerald-700 transition-colors flex items-center justify-center"
                 >
                   <Check className="w-4 h-4 mr-2" /> {t('study.known')}
                 </button>
                 <button
                   onClick={() => handleAnswer(false)}
-                  className="flex-1 px-5 py-3 bg-ember-500 text-paper rounded-xl font-semibold hover:bg-ember-600 transition-colors flex items-center justify-center"
+                  className="btn-pop flex-1 px-5 py-3 bg-ember-500 text-paper rounded-xl font-semibold hover:bg-ember-600 transition-colors flex items-center justify-center"
                 >
                   <X className="w-4 h-4 mr-2" /> {t('study.again')}
                 </button>
                 <button
                   onClick={() => setShowAnswer(false)}
-                  className="px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
+                  className="btn-pop px-5 py-3 border border-slate-300 dark:border-sepia-600 dark:text-sepia-200 rounded-xl hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
                 >
                   {t('study.hide')}
                 </button>
@@ -1111,7 +970,7 @@ const StudyPage: React.FC = () => {
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-sepia-800 flex justify-center">
             <button
               onClick={finishSession}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-ink-soft dark:text-sepia-300 font-medium hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
+              className="btn-pop inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-ink-soft dark:text-sepia-300 font-medium hover:bg-slate-100 dark:hover:bg-sepia-800 transition-colors"
             >
               <Check className="w-4 h-4" /> {t('study.end')}
               {unansweredCount > 0 && (
@@ -1121,22 +980,6 @@ const StudyPage: React.FC = () => {
           </div>
         </div>
       </motion.div>
-
-      <ConfirmDialog
-        open={confirmDiscard}
-        title={t('reward.discard')}
-        message={t('reward.discard.warn')}
-        confirmLabel={t('reward.discard')}
-        onConfirm={() => {
-          setConfirmDiscard(false)
-          if (!savedToLibrary) {
-            handleDiscardSession()
-          } else {
-            navigate('/')
-          }
-        }}
-        onCancel={() => setConfirmDiscard(false)}
-      />
 
       <SessionConfigModal
         open={configOpen}

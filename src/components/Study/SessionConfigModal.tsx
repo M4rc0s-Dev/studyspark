@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Brain, Clock, Repeat, X, Shuffle, ArrowDownWideNarrow, ListOrdered, ArrowRightLeft, Sparkles } from 'lucide-react'
+import { Brain, Clock, Repeat, X, Shuffle, ArrowDownWideNarrow, ListOrdered, ArrowRightLeft, Sparkles, FolderInput } from 'lucide-react'
 import { useLanguage } from '../../context/LanguageContext'
 import { useSettings } from '../../context/SettingsContext'
 import type { SessionConfig, StudyMode, CardOrder, CardDirection } from '../../context/SettingsContext'
@@ -81,6 +81,11 @@ const SessionConfigModal: React.FC<SessionConfigModalProps> = ({ open, onClose, 
               <p className="text-sm text-ember-50 mt-1">
                 {deckTitle ? <span className="font-medium">{deckTitle}</span> : t('config.subtitle')}
               </p>
+              {/* The deck is always saved to SparkDrive on generation — no prompt. */}
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-ember-500/15 px-3 py-1.5 text-ember-700 dark:text-ember-300">
+                <FolderInput className="w-4 h-4" />
+                <span className="text-xs font-medium">{t('config.willsave')}</span>
+              </div>
             </div>
 
             <div className="px-6 py-5 space-y-6 max-h-[70vh] overflow-y-auto">

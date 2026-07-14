@@ -171,7 +171,7 @@ const AuthPage: React.FC = () => {
               href={`https://${confirmEmail.split('@')[1]}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
+              className="btn-pop mt-6 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift transition-all"
             >
               <Mail className="w-5 h-5" /> {t('auth.checkmail.open')}
             </a>
@@ -240,7 +240,7 @@ const AuthPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={busy}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                className="btn-pop w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift transition-all disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : t('auth.forgot.send')}
               </button>
@@ -322,7 +322,7 @@ const AuthPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={busy}
-                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="btn-pop w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-ember-500 text-paper font-bold shadow-soft hover:shadow-lift transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {busy ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -345,7 +345,7 @@ const AuthPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleGoogle}
-                className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-slate-300 dark:border-sepia-600 bg-white dark:bg-sepia-800 text-ink dark:text-sepia-50 font-semibold shadow-soft hover:bg-paper-sunken dark:hover:bg-sepia-700 transition-all"
+                className="btn-pop w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-slate-300 dark:border-sepia-600 bg-white dark:bg-sepia-800 text-ink dark:text-sepia-50 font-semibold shadow-soft hover:bg-paper-sunken dark:hover:bg-sepia-700 transition-all"
               >
                 <span className="w-5 h-5 rounded-full bg-[#4285F4] text-white flex items-center justify-center text-xs font-bold">G</span>
                 {mode === 'login' ? t('auth.google.login') : t('auth.google.register')}

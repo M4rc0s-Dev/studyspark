@@ -27,6 +27,7 @@ import { useLanguage } from '../context/LanguageContext'
 import { useAuth } from '../context/AuthContext'
 import { useFlashcardStore } from '../context/FlashcardContext'
 import { updateSessionMeta, deleteSessionFromSupabase } from '../lib/sessions'
+import { loadFoldersFromSupabase, syncFoldersToSupabase } from '../lib/folders'
 import ConfirmDialog from '../components/Layout/ConfirmDialog'
 import ContextMenu, { type ContextMenuState, type ContextMenuItem } from '../components/Layout/ContextMenu'
 import { buildMoveTree as buildFolderTree } from '../lib/folderTree'
@@ -86,34 +87,40 @@ const LibraryPage: React.FC = () => {
   const [dragOverFolder, setDragOverFolder] = useState<string | null | undefined>(undefined)
   const dragImageRef = useRef<HTMLDivElement | null>(null)
 
-  // Load empty folders (persisted locally so empty folders survive).
+  // Load empty folders: from Supabase (authoritative when logged in) and from
+  // localStorage (fallback / when signed out). We mark `foldersLoaded` only
+  // AFTER applying the saved value, so a fast unmount (e.g. the auth gate
+  // redirecting) can't persist the empty initial state and wipe the folders.
   const foldersLoaded = useRef(false)
   useEffect(() => {
     let cancelled = false
+    const apply = (paths: string[]) => {
+      if (cancelled) return
+      setEmptyFolders(paths)
+      foldersLoaded.current = true
+    }
+    // Local fallback first (instant), Supabase overrides when it resolves.
     try {
       const raw = localStorage.getItem(FOLDERS_KEY)
-      if (raw && !cancelled) {
-        const parsed = JSON.parse(raw) as string[]
-        // Only mark loaded AFTER we've actually applied the saved value, so a
-        // fast unmount (e.g. the auth gate redirecting) can't persist the
-        // empty initial state and wipe the saved folders.
-        setEmptyFolders(parsed)
-        foldersLoaded.current = true
-      } else {
-        foldersLoaded.current = true
-      }
+      if (raw) apply(JSON.parse(raw) as string[])
+      else foldersLoaded.current = true
     } catch {
       foldersLoaded.current = true
+    }
+    if (user) {
+      loadFoldersFromSupabase().then((paths) => {
+        if (!cancelled) apply(paths)
+      })
     }
     return () => {
       cancelled = true
     }
-  }, [])
+    // Re-run when the user logs in/out so cloud folders are picked up.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user])
 
-  // Persist empty folders — but ONLY after the initial load has run. On the
-  // first render `emptyFolders` is []; persisting it then would wipe the
-  // saved folders before the load effect applies them (and a quick unmount,
-  // e.g. the auth gate redirecting, would make the wipe permanent).
+  // Persist empty folders — local (always) + Supabase (when logged in). Only
+  // after the initial load has run, to avoid wiping saved folders on mount.
   useEffect(() => {
     if (!foldersLoaded.current) return
     try {
@@ -121,7 +128,8 @@ const LibraryPage: React.FC = () => {
     } catch {
       /* ignore */
     }
-  }, [emptyFolders])
+    if (user) syncFoldersToSupabase(emptyFolders)
+  }, [emptyFolders, user])
 
   // Load / persist folder colors locally.
   useEffect(() => {
@@ -146,37 +154,34 @@ const LibraryPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user])
 
-  // Library is account-only. Wait for auth to finish loading so a still-
-  // resolving session on refresh isn't mistaken for "logged out". Use a short
-  // grace delay: on a normal navigation while already signed in, `user` may lag
-  // one render behind `loading=false`, which would otherwise bounce the user to
-  // /auth (the "stuck on blue background, must press F5" bug). We only redirect
-  // once we're confident the session truly isn't coming back.
-  // Grace window: while AuthContext re-establishes the session on a hard
-  // reload (F5), `loading` flips to false a moment before `user` is set. We
-  // hold the auth gate open for a bit and show a spinner the WHOLE time, so a
-  // reload never flashes the blue background or bounces to /auth.
+  // Library is account-only. We must NOT render the (empty) library while the
+  // session is still resolving or while a previously-present session is briefly
+  // dropped during a reload — doing so leaves the bare background with the
+  // "Entrar" button and no content (the reported "white screen" bug). So we
+  // keep a gate open whenever there is no user, and only close it once a real
+  // session is confirmed. If the session is lost again while mounted, the gate
+  // re-opens instead of leaving the page hanging.
   const [gateOpen, setGateOpen] = useState(true)
   useEffect(() => {
     if (user) {
       setGateOpen(false)
       return
     }
+    // No user: keep the gate open. While auth is still loading, just wait.
+    setGateOpen(true)
     if (loading) return
-    // No user after auth settled: wait a little longer in case the session is
-    // still being restored, then send to login.
+    // Auth settled with no user: give it a short grace (session may still be
+    // restored from storage) before bouncing to login.
     const t = window.setTimeout(() => {
-      if (!user) {
-        setGateOpen(false)
-        navigate('/auth?next=library', { replace: true })
-      }
+      if (!user) navigate('/auth?next=library', { replace: true })
     }, 900)
     return () => window.clearTimeout(t)
   }, [loading, user, navigate])
 
-  // Spinner covers BOTH the initial `loading` phase and the grace window:
-  // this is what stops F5 from showing the empty blue page.
-  if ((loading || gateOpen) && !user) {
+  // Spinner covers EVERY moment there is no confirmed user (loading, the grace
+  // window, or a transient session drop). This is what stops F5 from flashing
+  // the empty background.
+  if (gateOpen && !user) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-ember-500 animate-spin" />
@@ -690,7 +695,7 @@ const LibraryPage: React.FC = () => {
             </div>
             <button
               onClick={openCreateFolder}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all shrink-0"
+              className="btn-pop inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all shrink-0"
             >
               <FolderPlus className="w-4 h-4" /> {t('library.newfolder')}
             </button>
@@ -817,10 +822,10 @@ const LibraryPage: React.FC = () => {
 
                   <DeckFeedback deck={s} t={t} />
 
-                  <div className="mt-3 flex items-center gap-1.5">
+                  <div className="mt-3 flex items-stretch justify-center gap-1.5">
                     <button
                       onClick={() => openSession(s)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 active:scale-95 transition-all"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift btn-pop active:scale-95 transition-all"
                     >
                       <BookOpen className="w-4 h-4" /> {t('library.study')}
                     </button>
@@ -831,7 +836,7 @@ const LibraryPage: React.FC = () => {
                       className={`inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg text-sm font-semibold shadow-soft transition-all ${
                         pendingCountFor(s) === 0
                           ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
-                          : 'bg-amber-500 text-white hover:bg-amber-600 hover:-translate-y-0.5 active:scale-95'
+                          : 'bg-amber-500 text-white hover:bg-amber-600 btn-pop active:scale-95'
                       }`}
                     >
                       <ListX className="w-4 h-4" />
@@ -844,7 +849,7 @@ const LibraryPage: React.FC = () => {
                       className={`inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg text-sm font-semibold shadow-soft transition-all ${
                         wrongCountFor(s) === 0
                           ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
-                          : 'bg-rose-500 text-white hover:bg-rose-600 hover:-translate-y-0.5 active:scale-95'
+                          : 'bg-rose-500 text-white hover:bg-rose-600 btn-pop active:scale-95'
                       }`}
                     >
                       <X className="w-4 h-4" />
@@ -895,7 +900,7 @@ const LibraryPage: React.FC = () => {
               </button>
               <button
                 onClick={applyFolderName}
-                className="px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all"
+                className="btn-pop px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all"
               >
                 {t('library.save')}
               </button>

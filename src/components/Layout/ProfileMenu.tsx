@@ -57,14 +57,17 @@ const ProfileMenu: React.FC = () => {
 
   // Show "recent sessions": order by last-opened, keeping cloud order as fallback.
   const recentIds = getRecentSessionIds()
-  const recentSessions = [...sessions].sort((a, b) => {
-    const ia = recentIds.indexOf(a.id)
-    const ib = recentIds.indexOf(b.id)
-    if (ia === -1 && ib === -1) return 0
-    if (ia === -1) return 1
-    if (ib === -1) return -1
-    return ia - ib
-  })
+  const recentSessions = [...sessions]
+    .sort((a, b) => {
+      const ia = recentIds.indexOf(a.id)
+      const ib = recentIds.indexOf(b.id)
+      if (ia === -1 && ib === -1) return 0
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
+    // Cap the "recent sessions" list at the 5 most recent so the menu stays compact.
+    .slice(0, 5)
 
   const openSession = (id: string) => {
     setOpen(false)

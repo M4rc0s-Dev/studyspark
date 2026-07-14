@@ -130,3 +130,18 @@ body {
 .dark .card-sheen {
   background-image: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 45%);
 }
+
+/* Reactive buttons: a quick, springy lift + slight grow on hover, and a press
+   on tap. Applied via the `btn-pop` class so individual buttons stay in control
+   of their color/size. */
+.btn-pop {
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+  will-change: transform;
+}
+.btn-pop:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.03);
+}
+.btn-pop:active:not(:disabled) {
+  transform: translateY(0) scale(0.97);
+}

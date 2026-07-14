@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import UploadArea from '../components/Features/UploadArea'
 import SessionConfigModal from '../components/Study/SessionConfigModal'
 import LoadingScreen from '../components/Features/LoadingScreen'
+import ConfirmDialog from '../components/Layout/ConfirmDialog'
 import { toast } from 'react-hot-toast'
 import FlashcardAPI from '../services/apiService'
 import { useLanguage } from '../context/LanguageContext'
@@ -31,8 +32,12 @@ const HomePage: React.FC = () => {
   const uploadRef = useRef<HTMLDivElement>(null)
   const { t } = useLanguage()
   const { user } = useAuth()
-  const { createSession } = useFlashcardStore()
+  const { state, createSession } = useFlashcardStore()
   const { prefs } = useSettings()
+  // When the user generates a new deck while a study session is still open
+  // (not yet saved/discarded), warn that generating will discard the current
+  // one. We stash the pending upload args until they confirm.
+  const [pendingGenArgs, setPendingGenArgs] = useState<Parameters<typeof handleUpload> | null>(null)
   // Guest flow: holds the upload args until the user either signs up or
   // confirms they want to generate anyway (cards are saved and surfaced after
   // they log in).
@@ -52,11 +57,17 @@ const HomePage: React.FC = () => {
   }
 
   // Wrapper used by UploadArea: guests get a warning modal before generating,
-  // signed-in users go straight to generation.
+  // signed-in users go straight to generation. If a study session is already
+  // open (and not the demo), warn that generating will discard it first.
   const onUploadProxy = (file?: File, text?: string, fileName?: string, cardCount?: number) => {
     if (!user) {
       setGuestArgs([file, text, fileName, cardCount])
       setShowGuest(true)
+      return
+    }
+    const hasOpenSession = state.currentSession && state.currentSession.id !== 'demo'
+    if (hasOpenSession) {
+      setPendingGenArgs([file, text, fileName, cardCount])
       return
     }
     handleUpload(file, text, fileName, cardCount)
@@ -207,7 +218,7 @@ const HomePage: React.FC = () => {
           <motion.button
             initial="hidden" animate="show" variants={fade} transition={{ delay: 0.18, duration: 0.5 }}
             onClick={scrollToUpload}
-            className="mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-ember-500 text-paper text-lg font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all"
+            className="btn-pop mt-10 inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-ember-500 text-paper text-lg font-bold shadow-soft hover:shadow-lift transition-all"
           >
             <Sparkles className="w-5 h-5" /> {t('cta.create')}
           </motion.button>
@@ -358,7 +369,7 @@ const HomePage: React.FC = () => {
           <motion.button
             initial="hidden" whileInView="show" viewport={{ once: true }} variants={fade} transition={{ delay: 0.1 }}
             onClick={scrollToUpload}
-            className="mt-8 inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-ember-500 text-paper text-lg font-bold shadow-xl hover:-translate-y-0.5 hover:shadow-lift transition-all"
+            className="btn-pop mt-8 inline-flex items-center gap-2 px-10 py-4 rounded-2xl bg-ember-500 text-paper text-lg font-bold shadow-xl hover:shadow-lift transition-all"
           >
             <Sparkles className="w-5 h-5" /> {t('cta.create')}
           </motion.button>
@@ -399,7 +410,7 @@ const HomePage: React.FC = () => {
                   setShowGuest(false)
                   navigate('/auth?next=guest', { replace: true })
                 }}
-                className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all"
+                className="btn-pop inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift transition-all"
               >
                 <UserPlus className="w-4 h-4" /> {t('guest.register')}
               </button>
@@ -418,6 +429,20 @@ const HomePage: React.FC = () => {
       )}
 
       {isUploading && <LoadingScreen elapsedMs={loadingElapsed} error={uploadError} onCancel={cancelUpload} />}
+
+      <ConfirmDialog
+        open={pendingGenArgs !== null}
+        title={t('home.discard.title')}
+        message={t('home.discard.desc')}
+        confirmLabel={t('home.discard.confirm')}
+        destructive
+        onConfirm={() => {
+          const args = pendingGenArgs
+          setPendingGenArgs(null)
+          if (args) handleUpload(...args)
+        }}
+        onCancel={() => setPendingGenArgs(null)}
+      />
     </div>
   )
 }
@@ -450,8 +475,9 @@ const SampleCardStack: React.FC<{ cards: { q: string; a: string }[]; centered?: 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: 0.1, duration: 0.5 }}
-      className={`relative [perspective:1200px] ${centered ? 'block' : 'hidden lg:block'}`}
+      whileHover={{ y: -6, scale: 1.03 }}
+      transition={{ delay: 0.1, duration: 0.5, type: 'spring', stiffness: 260, damping: 18 }}
+      className={`relative [perspective:1200px] cursor-default ${centered ? 'block' : 'hidden lg:block'}`}
     >
       <div
         className="relative w-full rounded-3xl transition-transform duration-700 [transform-style:preserve-3d]"

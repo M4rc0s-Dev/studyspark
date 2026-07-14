@@ -148,6 +148,11 @@ export const translations = {
     'footer.terms': 'Términos',
     'footer.contact': 'Contacto',
     'footer.copy': 'Hecho con IA para estudiantes.',
+    // Home - discard open session before generating
+    'home.discard.title': '¿Descartar la sesión actual?',
+    'home.discard.desc': 'Tienes un mazo abierto sin guardar. Si generas uno nuevo, se perderá. Guárdalo antes en la pantalla de estudio si quieres conservarlo.',
+    'home.discard.confirm': 'Generar igualmente',
+    'config.willsave': 'Se guardará en SparkDrive al generar',
     // Auth - confirmación de email
     'auth.checkmail': 'Revisa tu correo',
     'auth.checkmail.desc': 'Te hemos enviado un enlace de confirmación a',
@@ -557,6 +562,11 @@ export const translations = {
     'footer.terms': 'Terms',
     'footer.contact': 'Contact',
     'footer.copy': 'Made with AI for students.',
+    // Home - discard open session before generating
+    'home.discard.title': 'Discard the current session?',
+    'home.discard.desc': "You have an open deck that hasn't been saved. Generating a new one will discard it. Save it from the study screen first if you want to keep it.",
+    'home.discard.confirm': 'Generate anyway',
+    'config.willsave': 'It will be saved to SparkDrive on generation',
     // Auth - email confirmation
     'auth.checkmail': 'Check your email',
     'auth.checkmail.desc': 'We sent a confirmation link to',
