@@ -218,10 +218,15 @@ const StudyPage: React.FC = () => {
     if (sessionId && !currentSession) {
       loadSessionFromSupabase(sessionId).then((s) => {
         if (active && s) {
-          const trimmed =
-            navFilter === 'pending'
-              ? { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.studied !== true) }
-              : s
+          let trimmed = s
+          // `pending` -> only cards never answered; `wrong` -> only cards the
+          // user got wrong before. Both let the library launch a focused review
+          // straight from the deck card instead of the final summary screen.
+          if (navFilter === 'pending') {
+            trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.studied !== true) }
+          } else if (navFilter === 'wrong') {
+            trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.correct === false) }
+          }
           setCurrentSession(trimmed)
           setLoadedFromCloud(true)
         }

@@ -152,19 +152,31 @@ const LibraryPage: React.FC = () => {
   // one render behind `loading=false`, which would otherwise bounce the user to
   // /auth (the "stuck on blue background, must press F5" bug). We only redirect
   // once we're confident the session truly isn't coming back.
+  // Grace window: while AuthContext re-establishes the session on a hard
+  // reload (F5), `loading` flips to false a moment before `user` is set. We
+  // hold the auth gate open for a bit and show a spinner the WHOLE time, so a
+  // reload never flashes the blue background or bounces to /auth.
+  const [gateOpen, setGateOpen] = useState(true)
   useEffect(() => {
-    if (user) return
+    if (user) {
+      setGateOpen(false)
+      return
+    }
     if (loading) return
+    // No user after auth settled: wait a little longer in case the session is
+    // still being restored, then send to login.
     const t = window.setTimeout(() => {
-      // Re-check at fire time: by now AuthContext has settled.
-      if (!user) navigate('/auth?next=library', { replace: true })
-    }, 400)
+      if (!user) {
+        setGateOpen(false)
+        navigate('/auth?next=library', { replace: true })
+      }
+    }, 900)
     return () => window.clearTimeout(t)
   }, [loading, user, navigate])
 
-  // While auth is still resolving, show a spinner instead of the empty blue
-  // background (the "stuck on blue, must press F5" bug).
-  if (loading && !user) {
+  // Spinner covers BOTH the initial `loading` phase and the grace window:
+  // this is what stops F5 from showing the empty blue page.
+  if ((loading || gateOpen) && !user) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-ember-500 animate-spin" />
@@ -403,9 +415,21 @@ const LibraryPage: React.FC = () => {
     navigate(`/study/${s.id}`, { state: { filter: 'pending' } })
   }
 
+  // Open a deck studying ONLY the cards the user got wrong. Same filter
+  // mechanism as pending — keeps the "review just the failures" one click away
+  // from the deck card (no trip through the final summary screen).
+  const openWrongSession = (s: StudySession) => {
+    setCurrentSession(s)
+    navigate(`/study/${s.id}`, { state: { filter: 'wrong' } })
+  }
+
   // Count of cards in a session the user never answered.
   const pendingCountFor = (s: StudySession) =>
     (s.flashcards as FlashcardType[] | undefined)?.filter((f) => f.studied !== true).length ?? 0
+
+  // Count of cards in a session the user answered incorrectly.
+  const wrongCountFor = (s: StudySession) =>
+    (s.flashcards as FlashcardType[] | undefined)?.filter((f) => f.correct === false).length ?? 0
 
   const renameSession = (s: StudySession) => {
     const name = sessionRenameValue.trim()
@@ -529,6 +553,9 @@ const LibraryPage: React.FC = () => {
     { label: t('library.study'), icon: BookOpen, onClick: () => openSession(s) },
     ...(pendingCountFor(s) > 0
       ? [{ label: t('reward.study.pending'), icon: ListX, onClick: () => openPendingSession(s) } as ContextMenuItem]
+      : []),
+    ...(wrongCountFor(s) > 0
+      ? [{ label: t('reward.retry.wrong'), icon: X, onClick: () => openWrongSession(s) } as ContextMenuItem]
       : []),
     { label: t('library.export.csv'), icon: Download, onClick: () => exportSession(s, 'csv') },
     { separator: true },
@@ -790,10 +817,10 @@ const LibraryPage: React.FC = () => {
 
                   <DeckFeedback deck={s} t={t} />
 
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="mt-3 flex items-center gap-1.5">
                     <button
                       onClick={() => openSession(s)}
-                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 active:scale-95 transition-all"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-ember-500 text-paper text-sm font-bold shadow-soft hover:shadow-lift hover:-translate-y-0.5 active:scale-95 transition-all"
                     >
                       <BookOpen className="w-4 h-4" /> {t('library.study')}
                     </button>
@@ -801,14 +828,27 @@ const LibraryPage: React.FC = () => {
                       onClick={() => pendingCountFor(s) > 0 && openPendingSession(s)}
                       disabled={pendingCountFor(s) === 0}
                       title={t('reward.study.pending')}
-                      className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-soft transition-all ${
+                      className={`inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg text-sm font-semibold shadow-soft transition-all ${
                         pendingCountFor(s) === 0
                           ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
                           : 'bg-amber-500 text-white hover:bg-amber-600 hover:-translate-y-0.5 active:scale-95'
                       }`}
                     >
-                      <ListX className="w-4 h-4" /> {t('reward.study.pending')}
+                      <ListX className="w-4 h-4" />
                       <span className={`rounded-full px-1.5 text-xs ${pendingCountFor(s) === 0 ? 'bg-slate-300 dark:bg-sepia-700' : 'bg-white/25'}`}>{pendingCountFor(s)}</span>
+                    </button>
+                    <button
+                      onClick={() => wrongCountFor(s) > 0 && openWrongSession(s)}
+                      disabled={wrongCountFor(s) === 0}
+                      title={t('reward.retry.wrong')}
+                      className={`inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg text-sm font-semibold shadow-soft transition-all ${
+                        wrongCountFor(s) === 0
+                          ? 'bg-slate-200 dark:bg-sepia-800 text-slate-400 dark:text-sepia-500 cursor-not-allowed'
+                          : 'bg-rose-500 text-white hover:bg-rose-600 hover:-translate-y-0.5 active:scale-95'
+                      }`}
+                    >
+                      <X className="w-4 h-4" />
+                      <span className={`rounded-full px-1.5 text-xs ${wrongCountFor(s) === 0 ? 'bg-slate-300 dark:bg-sepia-700' : 'bg-white/25'}`}>{wrongCountFor(s)}</span>
                     </button>
                   </div>
                 </motion.div>

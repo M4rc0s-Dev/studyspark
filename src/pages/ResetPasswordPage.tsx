@@ -30,12 +30,22 @@ const ResetPasswordPage: React.FC = () => {
     // session so updateUser can run. The recovery token_hash flow is handled
     // here too for robustness.
     if (code) {
-      supabase.auth
+      const client = supabase
+      client.auth
         .exchangeCodeForSession(code)
         .then(() => setVerified(true))
-        .catch(() => {
-          toast.error(t('auth.recovery.invalid'))
-          window.setTimeout(() => navigate('/auth', { replace: true }), 1500)
+        .catch(async () => {
+          // The code may already have been consumed (e.g. the email link was
+          // opened twice, or Supabase restored the session from storage on
+          // load). If a session is actually active now, just show the form
+          // instead of falsely reporting an invalid link.
+          const { data } = await client.auth.getSession()
+          if (data.session) {
+            setVerified(true)
+          } else {
+            toast.error(t('auth.recovery.invalid'))
+            window.setTimeout(() => navigate('/auth', { replace: true }), 1500)
+          }
         })
       return
     }
