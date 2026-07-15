@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
@@ -76,19 +76,10 @@ const LibraryPage: React.FC = () => {
   const [renamingSession, setRenamingSession] = useState<string | null>(null)
   const [sessionRenameValue, setSessionRenameValue] = useState('')
   const [filter, setFilter] = useState('') // search query in the main panel
-  // Selection state for click-to-select + multi-select + Delete (point 4).
-  // A path/date here means the item is selected (highlighted). Ctrl/Cmd+click
-  // toggles; plain click selects only that item; clicking empty space clears.
-  const [selectedFolders, setSelectedFolders] = useState<Set<string>>(new Set())
-  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set())
-  const selectionRef = useRef<{ folders: Set<string>; sessions: Set<string> }>({ folders: new Set(), sessions: new Set() })
-  selectionRef.current = { folders: selectedFolders, sessions: selectedSessions }
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null)
-  const [folderToDeleteMulti, setFolderToDeleteMulti] = useState<string[] | null>(null)
   // Second-step confirmation when the user chose to also delete the folder's contents.
   const [folderContentsToDelete, setFolderContentsToDelete] = useState<string | null>(null)
   const [sessionToDelete, setSessionToDelete] = useState<StudySession | null>(null)
-  const [sessionToDeleteMulti, setSessionToDeleteMulti] = useState<string[] | null>(null)
 
   // Drag and drop state. A drag carries EITHER a session id OR a folder path.
   const [dragSessionId, setDragSessionId] = useState<string | null>(null)
@@ -160,50 +151,6 @@ const LibraryPage: React.FC = () => {
       /* ignore */
     }
   }, [folderColors])
-
-  // Selection helpers (point 4). `additive` (Ctrl/Cmd held) toggles into the
-  // existing selection; otherwise it replaces it with just this item.
-  const toggleFolderSel = useCallback((path: string, additive: boolean) => {
-    setSelectedFolders((prev) => {
-      const next = additive ? new Set(prev) : new Set<string>()
-      if (additive && next.has(path)) next.delete(path)
-      else next.add(path)
-      return next
-    })
-  }, [])
-  const toggleSessionSel = useCallback((id: string, additive: boolean) => {
-    setSelectedSessions((prev) => {
-      const next = additive ? new Set(prev) : new Set<string>()
-      if (additive && next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
-  const clearSelection = useCallback(() => {
-    setSelectedFolders(new Set())
-    setSelectedSessions(new Set())
-  }, [])
-
-  // `Delete` / `Backspace` removes everything currently selected (point 4).
-  // Ignored while typing in an input or renaming, so it can't nuke decks mid-edit.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || renamingSession) return
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        const folders = selectionRef.current.folders
-        const sess = selectionRef.current.sessions
-        if (folders.size === 0 && sess.size === 0) return
-        e.preventDefault()
-        if (folders.size > 0) setFolderToDeleteMulti([...folders])
-        if (sess.size > 0) setSessionToDeleteMulti([...sess])
-      } else if (e.key === 'Escape') {
-        clearSelection()
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [renamingSession, clearSelection])
 
   useEffect(() => {
     if (user) refreshSessions()
@@ -306,10 +253,8 @@ const LibraryPage: React.FC = () => {
     return Array.from(names.values()).sort((a, b) => folderName(a).localeCompare(folderName(b)))
   }, [allFolderPaths, currentPath])
 
-  // Count decks that live ANYWHERE inside `path` (including nested subfolders),
-  // so a parent folder shows the true card total of its whole subtree (point 7).
   const sessionCountFor = (path: string) =>
-    sessions.filter((s) => inSubtree(s.folder || '', path)).length
+    sessions.filter((s) => (s.folder || '') === path).length
 
   // Folders matching the search query (point 6): the search box filters
   // BOTH decks and folders by name, so only relevant folders remain.
@@ -531,22 +476,6 @@ const LibraryPage: React.FC = () => {
     toast.success(t('settings.deleted'))
   }
 
-  // Delete every selected session at once (point 4).
-  const deleteSelectedSessions = async (ids: string[]) => {
-    await Promise.all(ids.map((id) => deleteSessionFromSupabase(id)))
-    setSessions((prev) => prev.filter((x) => !ids.includes(x.id)))
-    ids.forEach((id) => removeSession(id))
-    if (user) await refreshSessions()
-    toast.success(t('settings.deleted'))
-  }
-
-  // Delete every selected folder (point 4). Each is deleted WITHOUT its contents
-  // — contents would have to be selected separately; bulk-destructiveness is
-  // avoided to prevent an accidental Supr from wiping decks inside.
-  const deleteSelectedFolders = (paths: string[]) => {
-    paths.forEach((p) => deleteFolder(p, false))
-  }
-
   // A drop target (subfolder or breadcrumb) receives either a dragged session
   // (move the deck into `path`) or a dragged folder (move that folder so `path`
   // becomes its new parent).
@@ -734,7 +663,6 @@ const LibraryPage: React.FC = () => {
       // browser's "search with Google" menu). Specific widgets (folders,
       // sessions) call stopPropagation so their own menu wins.
       onContextMenu={openBackgroundMenu}
-      onClick={() => clearSelection()}
     >
       {/* Spinner covers every moment there is no confirmed user (loading, the
           grace window, or a transient session drop). Rendered here — NOT as an
@@ -842,27 +770,14 @@ const LibraryPage: React.FC = () => {
                   onDragLeave={() => setDragOverFolder((f) => (f === path ? undefined : f))}
                   onDrop={(e) => { e.preventDefault(); handleDropOnFolder(path) }}
                   onClick={(e) => {
-                    // Single click selects (point 4). A fast second click
-                    // (within DOUBLE_CLICK_MS) still enters the folder — we keep
-                    // both behaviours by checking the timer first, then treating
-                    // a non-double click as a selection toggle.
+                    // Fast double-click detection: if clicked twice within DOUBLE_CLICK_MS, enter folder
                     const now = Date.now()
                     const last = clickTimeRef.current.get(path) || 0
                     if (now - last < DOUBLE_CLICK_MS) {
                       e.preventDefault()
                       enterFolder(path)
-                      clickTimeRef.current.set(path, 0)
-                      return
                     }
                     clickTimeRef.current.set(path, now)
-                    e.stopPropagation()
-                    if ((e.metaKey || e.ctrlKey) && selectedFolders.has(path)) {
-                      toggleFolderSel(path, true)
-                    } else if (e.metaKey || e.ctrlKey) {
-                      toggleFolderSel(path, true)
-                    } else {
-                      toggleFolderSel(path, false)
-                    }
                   }}
                   onContextMenu={(e) => openFolderMenu(e, path)}
                   className={`group relative select-none flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer hover:-translate-y-1 hover:shadow-lift user-select-none ${
@@ -871,8 +786,6 @@ const LibraryPage: React.FC = () => {
                     dragFolderPath === path ? 'opacity-40' : ''
                   } ${
                     dragOverFolder === path ? 'ring-2 ring-ember-400' : ''
-                  } ${
-                    selectedFolders.has(path) ? 'ring-2 ring-ember-500 bg-ember-100 dark:bg-ember-500/20' : ''
                   }`}
                 >
                   <FolderOpen className={`w-10 h-10 mb-2 ${fc ? fc.text : 'text-ember-500'}`} />
@@ -915,23 +828,10 @@ const LibraryPage: React.FC = () => {
                   }}
                   onDragEndCapture={() => { setDragSessionId(null); setDragOverFolder(undefined) }}
                   onContextMenu={(e) => openSessionMenu(e, s)}
-                  onClick={(e) => {
-                    // Single click selects the deck (point 4). Ctrl/Cmd+click
-                    // toggles into/out of the multi-selection; plain click
-                    // selects ONLY this deck (and clears folder selection).
-                    e.stopPropagation()
-                    if (e.metaKey || e.ctrlKey) toggleSessionSel(s.id, true)
-                    else {
-                      setSelectedFolders(new Set())
-                      toggleSessionSel(s.id, false)
-                    }
-                  }}
                   className={`relative group select-none rounded-2xl shadow-soft border p-5 flex flex-col cursor-grab active:cursor-grabbing transition-all hover:-translate-y-1 hover:shadow-lift user-select-none ${
                     sc ? `${sc.bg} ${sc.border}` : 'bg-paper-raised dark:bg-sepia-900 border-slate-100 dark:border-sepia-800'
                   } ${
                     dragSessionId === s.id ? 'opacity-40' : ''
-                  } ${
-                    selectedSessions.has(s.id) ? 'ring-2 ring-ember-500 bg-ember-50 dark:bg-ember-500/15' : ''
                   }`}
                 >
                   {sc && <span className={`absolute top-0 left-0 h-full w-1.5 rounded-l-2xl ${sc.swatch}`} />}
@@ -1101,28 +1001,6 @@ const LibraryPage: React.FC = () => {
         }}
         onCancel={() => setSessionToDelete(null)}
       />
-      <ConfirmDialog
-        open={sessionToDeleteMulti !== null}
-        title={t('library.delete')}
-        message={`${sessionToDeleteMulti?.length ?? 0} ${t('library.confirm.delete.session.multi')}`}
-        onConfirm={() => {
-          if (sessionToDeleteMulti) deleteSelectedSessions(sessionToDeleteMulti)
-          setSessionToDeleteMulti(null)
-          clearSelection()
-        }}
-        onCancel={() => setSessionToDeleteMulti(null)}
-      />
-      <ConfirmDialog
-        open={folderToDeleteMulti !== null}
-        title={t('library.delete')}
-        message={`${folderToDeleteMulti?.length ?? 0} ${t('library.confirm.delete.folder.multi')}`}
-        onConfirm={() => {
-          if (folderToDeleteMulti) deleteSelectedFolders(folderToDeleteMulti)
-          setFolderToDeleteMulti(null)
-          clearSelection()
-        }}
-        onCancel={() => setFolderToDeleteMulti(null)}
-      />
 
       {/* Right-click context menu */}
       <ContextMenu menu={contextMenu} onClose={() => setContextMenu(null)} />
@@ -1162,8 +1040,8 @@ const DeckFeedback: React.FC<{ deck: StudySession; t: (k: any, v?: any) => strin
   return (
     <div className="mt-2 pl-4">
       <div className="flex items-center justify-between text-xs text-ink-muted dark:text-sepia-300 mb-1">
-        <span>{t('library.reviewed')}: {st.studied}/{st.total}</span>
-        <span className={st.acc >= 70 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-ember-600 dark:text-ember-400 font-semibold'}>{st.acc}% {t('library.accuracy')}</span>
+        <span>{st.studied}/{st.total} {t('library.cards').toLowerCase()}</span>
+        <span className={st.acc >= 70 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-ember-600 dark:text-ember-400 font-semibold'}>{st.acc}%</span>
       </div>
       <div className="h-2 rounded-full bg-slate-100 dark:bg-sepia-800 overflow-hidden">
         <div className={`h-full rounded-full ${barColor}`} style={{ width: `${st.pct}%` }} />
