@@ -43,6 +43,18 @@ export function xpForWrongReview(cards: { difficulty?: Difficulty; correct?: boo
   }, 0)
 }
 
+// XP for a focused "study the cards I never answered" pass (point 7). These are
+// brand-new attempts for the user, so a correct answer is worth 80% of the
+// base value (a touch under a fresh full study) and a wrong one still grants the
+// 10% consolation fraction, just like the first attempt in a normal session.
+export const PENDING_REVIEW_FRACTION = 0.8
+export function xpForPendingReview(cards: { difficulty?: Difficulty; correct?: boolean }[]): number {
+  return cards.reduce((sum, c) => {
+    const base = c.difficulty ? XP_BY_DIFFICULTY[c.difficulty] : DEFAULT_CORRECT_XP
+    return sum + (c.correct === true ? Math.round(base * PENDING_REVIEW_FRACTION) : Math.round(base * WRONG_FRACTION))
+  }, 0)
+}
+
 // ----- Levels -----
 // Curve is quadratic (each level costs a bit more than the last) until LEVEL_CAP,
 // after which every further level costs a FIXED amount. This keeps early levels

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle } from 'lucide-react'
@@ -33,6 +33,24 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onCancel,
 }) => {
   const { t } = useLanguage()
+
+  // Enter confirms (destructive or not); Escape cancels. Lets the keyboard
+  // drive the dialog without a mouse (point 2).
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        onConfirm()
+      } else if (e.key === 'Escape') {
+        e.preventDefault()
+        onCancel()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [open, onConfirm, onCancel])
+
   // Render through a portal to document.body so a transformed/animated ancestor
   // (e.g. the profile dropdown) can never offset or clip the centered dialog.
   return createPortal(

@@ -12,7 +12,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSettings } from '../context/SettingsContext'
 import { saveSessionToSupabase, loadSessionFromSupabase } from '../lib/sessions'
 import { exportSession } from '../lib/export'
-import { xpForSession, xpForWrongReview } from '../lib/leveling'
+import { xpForSession, xpForWrongReview, xpForPendingReview } from '../lib/leveling'
 import { sampleDeck } from '../data/sampleDeck'
 import { Flashcard as FlashcardType, StudySession } from '../types'
 import {
@@ -57,23 +57,37 @@ const StudyPage: React.FC = () => {
   const { state, setCurrentSession } = useFlashcardStore()
   const currentSession = state.currentSession
 
+  // Local working copy used for ALL study mutations. We deliberately do NOT
+  // write the trimmed/filtered deck back into the flashcard store's
+  // `currentSession`/`sessions`, so a focused review (pending/wrong) can never
+  // clobber the canonical deck the library shows (point 6): a 20-card deck
+  // reviewed for 5 failures must still read as 20 cards in the library afterwards.
+  // Only a FULL study pass persists the deck to the cloud + store.
+  const [deck, setDeck] = useState<StudySession | null>(null)
+
   const [currentCardIndex, setCurrentCardIndex] = useState(0)
   const [showAnswer, setShowAnswer] = useState(false)
-  const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
-  const [startTime, setStartTime] = useState(Date.now())
   const [answered, setAnswered] = useState(false)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [completed, setCompleted] = useState(false)
   const [awardedXp, setAwardedXp] = useState(0)
   const [loadedFromCloud, setLoadedFromCloud] = useState(false)
+  const [isPaused, setIsPaused] = useState(false)
+  const [configOpen, setConfigOpen] = useState(false)
+
+  // Timer runs ONLY while the user is thinking: the answer is hidden, the card is
+  // unanswered, the session is not finished, no modal is open and nothing is
+  // paused. Revealing the answer, answering, pausing or opening settings all stop
+  // the clock (point 8). The elapsed timer is only shown in basic/spaced modes,
+  // where this gate is what actually drives counting.
+  const isTimerRunning = !showAnswer && !answered && !completed && !configOpen && !isPaused
   // Guards XP against spamming "finish / review": each session id may only be
   // awarded once per browser session. Persisted in sessionStorage so it also
   // survives finishing → reviewing → finishing within the same visit.
   const awardedSessionsRef = useRef<Set<string>>(new Set())
   const [cardTimers, setCardTimers] = useState<Record<number, number>>({})
   const [timedLeft, setTimedLeft] = useState(TIMED_SECONDS_PER_CARD)
-  const [isPaused, setIsPaused] = useState(false)
 
   // Persist study state (card index, timers, elapsed) so returning from another tab
   // resumes exactly where the user left off.
@@ -182,7 +196,6 @@ const StudyPage: React.FC = () => {
       autoplay: prefs.autoplay,
     }
   )
-  const [configOpen, setConfigOpen] = useState(false)
   const [demoPending, setDemoPending] = useState(false)
   const [showWrongList, setShowWrongList] = useState(false)
 
@@ -218,7 +231,7 @@ const StudyPage: React.FC = () => {
       } else if (navFilter === 'wrong') {
         trimmed = { ...s, flashcards: (s.flashcards as FlashcardType[]).filter((f) => f.correct === false) }
       }
-      setCurrentSession(trimmed)
+      setDeck(trimmed)
       setLoadedFromCloud(true)
     }
     if (!currentSession) {
@@ -226,16 +239,21 @@ const StudyPage: React.FC = () => {
     } else if (navFilter) {
       // Already loaded locally (set by the library before navigating): just trim.
       applyFilter(currentSession)
+    } else if (!deck) {
+      // No filter: clone the whole deck into our local working copy without
+      // touching the store (which still holds the canonical deck).
+      setDeck(currentSession)
     }
     return () => {
       active = false
     }
-  }, [sessionId, currentSession, setCurrentSession, navFilter])
+  }, [sessionId, currentSession, navFilter, deck])
 
   // The deck after applying the chosen order. Direction is applied per-card at render.
+  // Reads from the LOCAL working copy so focused reviews never touch the store.
   const baseFlashcards = useMemo(
-    () => currentSession?.flashcards ?? [],
-    [currentSession]
+    () => deck?.flashcards ?? [],
+    [deck]
   )
   const flashcards = useMemo(
     () => applyOrder(baseFlashcards, config.order),
@@ -324,8 +342,6 @@ const StudyPage: React.FC = () => {
       setAnswered(false)
       setIsCorrect(null)
       setIsPaused(false)
-      setIsTimerRunning(true)
-      setStartTime(Date.now() - elapsedRef.current * 1000)
     },
     [flashcards.length, stopTimedCountdown]
   )
@@ -343,7 +359,6 @@ const StudyPage: React.FC = () => {
     stopTimedCountdown()
     setIsCorrect(correct)
     setAnswered(true)
-    setIsTimerRunning(false)
 
     const elapsed = elapsedRef.current
 
@@ -360,12 +375,12 @@ const StudyPage: React.FC = () => {
     updatedFlashcards[currentCardIndex] = updatedFlashcard
 
     const updatedSession: StudySession = {
-      ...currentSession!,
+      ...deck!,
       flashcards: updatedFlashcards,
-      timeSpent: (currentSession!.timeSpent || 0) + elapsed,
+      timeSpent: (deck!.timeSpent || 0) + elapsed,
     }
 
-    setCurrentSession(updatedSession)
+    setDeck(updatedSession)
   }
 
   // Stable ref so the timed countdown can call the latest handleAnswer.
@@ -376,7 +391,6 @@ const StudyPage: React.FC = () => {
 
   const finishSession = useCallback(async () => {
     setCompleted(true)
-    setIsTimerRunning(false)
     stopTimedCountdown()
 
     // The demo deck (id 'demo') is a throwaway preview: never award XP and
@@ -396,15 +410,17 @@ const StudyPage: React.FC = () => {
     const earned =
       reviewKind === 'wrong'
         ? xpForWrongReview(flashcards)
-        : xpForSession(flashcards)
+        : reviewKind === 'pending'
+          ? xpForPendingReview(flashcards)
+          : xpForSession(flashcards)
 
     // Only award XP the FIRST time a given (session, review-kind) is finished.
-    const sid = currentSession?.id
+    const sid = deck?.id
     const awardKey = sid ? `${sid}:${reviewKind}` : null
     const alreadyAwarded = !awardKey || awardedSessionsRef.current.has(awardKey)
     setAwardedXp(!isDemo && !alreadyAwarded ? earned : 0)
 
-    if (user && currentSession && awardKey && !alreadyAwarded && !isDemo) {
+    if (user && deck && awardKey && !alreadyAwarded && !isDemo) {
       awardedSessionsRef.current.add(awardKey)
       try {
         sessionStorage.setItem(AWARDED_KEY, JSON.stringify([...awardedSessionsRef.current]))
@@ -412,22 +428,22 @@ const StudyPage: React.FC = () => {
         /* ignore */
       }
       // Only a FULL study pass marks the deck as completed/persisted as the
-      // canonical progress. Focused reviews just grant XP — they don't overwrite
-      // the deck's overall studied/correct flags with the trimmed subset.
+      // canonical progress. Focused reviews (pending/wrong) just grant XP — they
+      // must NOT overwrite the deck in the library (point 6): the store keeps the
+      // full, untrimmed deck, so it still reads as 20 cards, not 5.
       if (reviewKind === 'full') {
-        const finalSession: StudySession = { ...currentSession, completedAt: new Date() }
+        const finalSession: StudySession = { ...currentSession!, completedAt: new Date() }
         setCurrentSession(finalSession)
         saveSessionToSupabase(finalSession)
       }
       addXp(earned)
     }
-  }, [flashcards, user, currentSession, navFilter, setCurrentSession, addXp, stopTimedCountdown])
+  }, [flashcards, user, currentSession, deck, navFilter, setCurrentSession, addXp, stopTimedCountdown])
 
   const resetStudy = useCallback(
-    (deck?: FlashcardType[]) => {
+    (cards?: FlashcardType[]) => {
       setCurrentCardIndex(0)
       setShowAnswer(false)
-      setIsTimerRunning(false)
       setElapsedTime(0)
       elapsedRef.current = 0
       setTimedLeft(TIMED_SECONDS_PER_CARD)
@@ -437,24 +453,24 @@ const StudyPage: React.FC = () => {
       setCompleted(false)
       setAwardedXp(0)
       setShowWrongList(false)
-      if (currentSession) {
-        const resetCards = (deck ?? currentSession.flashcards).map((f) => ({
+      if (deck) {
+        const resetCards = (cards ?? deck.flashcards).map((f) => ({
           ...f,
           studied: false,
           correct: undefined,
         }))
-        setCurrentSession({ ...currentSession, flashcards: resetCards })
+        setDeck({ ...deck, flashcards: resetCards })
       }
     },
-    [currentSession, setCurrentSession]
+    [deck]
   )
 
   // Retry only the cards the user got wrong.
   const retryWrong = () => {
-    const wrong = (currentSession?.flashcards ?? []).filter((f) => f.correct === false)
-    if (!currentSession || wrong.length === 0) return
-    setCurrentSession({
-      ...currentSession,
+    const wrong = (deck?.flashcards ?? []).filter((f) => f.correct === false)
+    if (!deck || wrong.length === 0) return
+    setDeck({
+      ...deck,
       flashcards: wrong.map((f) => ({ ...f, studied: false, correct: undefined })),
     })
     setCurrentCardIndex(0)
@@ -468,16 +484,15 @@ const StudyPage: React.FC = () => {
     elapsedRef.current = 0
     setTimedLeft(TIMED_SECONDS_PER_CARD)
     setCardTimers({})
-    setStartTime(Date.now())
   }
 
   // Study only the cards the user NEVER answered (pending). A card is pending
   // when it has not been marked as studied yet (studied !== true).
   const retryPending = () => {
-    const pending = (currentSession?.flashcards ?? []).filter((f) => f.studied !== true)
-    if (!currentSession || pending.length === 0) return
-    setCurrentSession({
-      ...currentSession,
+    const pending = (deck?.flashcards ?? []).filter((f) => f.studied !== true)
+    if (!deck || pending.length === 0) return
+    setDeck({
+      ...deck,
       flashcards: pending.map((f) => ({ ...f, studied: false, correct: undefined })),
     })
     setCurrentCardIndex(0)
@@ -491,11 +506,10 @@ const StudyPage: React.FC = () => {
     elapsedRef.current = 0
     setTimedLeft(TIMED_SECONDS_PER_CARD)
     setCardTimers({})
-    setStartTime(Date.now())
   }
 
   // True when there are cards the user never answered (pending review).
-  const pendingCount = (currentSession?.flashcards ?? []).filter((f) => f.studied !== true).length
+  const pendingCount = (deck?.flashcards ?? []).filter((f) => f.studied !== true).length
 
   const handleStartFromConfig = (cfg: SessionConfig) => {
     setConfig(cfg)
@@ -511,7 +525,6 @@ const StudyPage: React.FC = () => {
     setShowAnswer(false)
     setAnswered(false)
     setIsCorrect(null)
-    setIsTimerRunning(false)
     setElapsedTime(0)
     elapsedRef.current = 0
     setTimedLeft(TIMED_SECONDS_PER_CARD)
@@ -575,7 +588,7 @@ const StudyPage: React.FC = () => {
   }, [config.direction, currentCard])
 
   // ---- Empty state: guide the user to where decks are created. ----
-  if (!currentSession || flashcards.length === 0) {
+  if (!deck || flashcards.length === 0) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-20 text-center">
         <div className="bg-paper-raised dark:bg-sepia-900 rounded-3xl shadow-soft ring-1 ring-slate-200/70 dark:ring-sepia-800 p-10 transition-colors">
@@ -788,7 +801,7 @@ const StudyPage: React.FC = () => {
 
             <motion.button
               type="button"
-              onClick={() => exportSession(currentSession, 'csv')}
+              onClick={() => exportSession(deck ?? currentSession, 'csv')}
               whileHover={{ y: -2, scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
               initial={{ opacity: 0, y: 12 }}
@@ -827,7 +840,7 @@ const StudyPage: React.FC = () => {
                 {String(answeredCount + 1)}
               </span>
               <div>
-                <h1 className="font-display text-2xl font-bold text-ink dark:text-sepia-50 leading-tight">{currentSession.title}</h1>
+                <h1 className="font-display text-2xl font-bold text-ink dark:text-sepia-50 leading-tight">{deck?.title ?? currentSession?.title}</h1>
                 <p className="text-ink-muted dark:text-sepia-300">
                   {t('study.card')} {currentCardIndex + 1} {t('study.of')} {flashcards.length}
                   {unansweredCount > 0 && (

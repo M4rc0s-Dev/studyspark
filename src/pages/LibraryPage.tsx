@@ -253,8 +253,13 @@ const LibraryPage: React.FC = () => {
     return Array.from(names.values()).sort((a, b) => folderName(a).localeCompare(folderName(b)))
   }, [allFolderPaths, currentPath])
 
+  // Total flashcards inside a folder, counting decks that live in the folder
+  // AND any of its subfolders (point 3). A folder with only nested decks
+  // must not read "0 tarjetas" — it shows the full recursive total.
   const sessionCountFor = (path: string) =>
-    sessions.filter((s) => (s.folder || '') === path).length
+    sessions
+      .filter((s) => inSubtree(s.folder || '', path))
+      .reduce((sum, s) => sum + ((s.flashcards as FlashcardType[] | undefined)?.length ?? 0), 0)
 
   // Folders matching the search query (point 6): the search box filters
   // BOTH decks and folders by name, so only relevant folders remain.
@@ -271,6 +276,42 @@ const LibraryPage: React.FC = () => {
     const q = filter.toLowerCase()
     return list.filter((s) => s.title.toLowerCase().includes(q))
   }, [sessions, currentPath, filter])
+
+  // Multi-selection (point 1 & 2). Keys are folder paths or session ids;
+  // `lastSelectedKey` anchors Shift-range selection (Windows Explorer style).
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const lastSelectedKey = useRef<string | null>(null)
+  // The ordered list of selectable keys currently shown (folders first, then
+  // decks, matching the visual grid) — used to resolve a Shift range.
+  const orderedKeys = useMemo(
+    () => [...visibleFolders, ...visibleSessions.map((s) => s.id)],
+    [visibleFolders, visibleSessions]
+  )
+  const clearSelection = () => {
+    setSelected(new Set())
+    lastSelectedKey.current = null
+  }
+
+  // Keyboard shortcuts for multi-selection (point 2): Delete/Backspace opens the
+  // batch-delete confirmation, Escape clears the selection (unless a dialog is
+  // already open), and the dialog itself confirms on Enter (handled in ConfirmDialog).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const dialogOpen = folderToDelete !== null || folderContentsToDelete !== null || sessionToDelete !== null
+      if (e.key === 'Escape') {
+        if (!dialogOpen && selected.size > 0) clearSelection()
+        return
+      }
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (dialogOpen || selected.size === 0) return
+        e.preventDefault()
+        setFolderToDelete('__multi__')
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, folderToDelete, folderContentsToDelete, sessionToDelete])
 
   // Breadcrumb: ['', 'A', 'A/B', ...] up to currentPath.
   const crumbs = useMemo(() => {
@@ -476,6 +517,20 @@ const LibraryPage: React.FC = () => {
     toast.success(t('settings.deleted'))
   }
 
+  // Batch delete of everything currently selected (point 2). Folders are removed
+  // WITHOUT their contents (safe default — decks move up to the parent), sessions
+  // are deleted individually. Selection is cleared afterwards.
+  const deleteSelected = async () => {
+    const folders = [...selected].filter((k) => visibleFolders.includes(k as string))
+    const sessionsToDelete = sessions.filter((s) => selected.has(s.id))
+    folders.forEach((p) => deleteFolder(p, false))
+    for (const s of sessionsToDelete) await deleteSession(s)
+    clearSelection()
+    setFolderToDelete(null)
+    setSessionToDelete(null)
+    toast.success(t('settings.deleted'))
+  }
+
   // A drop target (subfolder or breadcrumb) receives either a dragged session
   // (move the deck into `path`) or a dragged folder (move that folder so `path`
   // becomes its new parent).
@@ -497,6 +552,33 @@ const LibraryPage: React.FC = () => {
   }
 
   const enterFolder = (path: string) => setCurrentPath(path)
+
+  // Selection logic (point 1). A plain click selects ONLY `key`; Ctrl/Cmd+click
+  // toggles it; Shift+click extends from the last selected key across the
+  // currently-visible ordered list (folders then decks) — Explorer behaviour.
+  const toggleSelect = (key: string, e: React.MouseEvent) => {
+    const ordered = orderedKeys
+    const idx = ordered.indexOf(key)
+    const lastIdx = lastSelectedKey.current ? ordered.indexOf(lastSelectedKey.current) : -1
+
+    if (e.shiftKey && lastIdx !== -1 && idx !== -1) {
+      const [a, b] = lastIdx < idx ? [lastIdx, idx] : [idx, lastIdx]
+      const range = new Set(selected)
+      for (let i = a; i <= b; i++) range.add(ordered[i])
+      setSelected(range)
+      return
+    }
+    if (e.metaKey || e.ctrlKey) {
+      const next = new Set(selected)
+      next.has(key) ? next.delete(key) : next.add(key)
+      setSelected(next)
+      lastSelectedKey.current = key
+      return
+    }
+    // Plain click: select just this one (and remember it for the next Shift).
+    setSelected(new Set([key]))
+    lastSelectedKey.current = key
+  }
 
   // ----- Colors -----
   const setSessionColor = (s: StudySession, color: string | null) => {
@@ -769,23 +851,28 @@ const LibraryPage: React.FC = () => {
                   onDragOver={(e) => { e.preventDefault(); if (dragFolderPath !== path) setDragOverFolder(path) }}
                   onDragLeave={() => setDragOverFolder((f) => (f === path ? undefined : f))}
                   onDrop={(e) => { e.preventDefault(); handleDropOnFolder(path) }}
+                  onContextMenu={(e) => openFolderMenu(e, path)}
                   onClick={(e) => {
-                    // Fast double-click detection: if clicked twice within DOUBLE_CLICK_MS, enter folder
+                    // Plain click selects (Explorer-style); Ctrl/Cmd/Shift extend.
+                    toggleSelect(path, e)
+                    // Fast double-click detection: enter the folder on a quick second click.
                     const now = Date.now()
                     const last = clickTimeRef.current.get(path) || 0
                     if (now - last < DOUBLE_CLICK_MS) {
                       e.preventDefault()
+                      clearSelection()
                       enterFolder(path)
                     }
                     clickTimeRef.current.set(path, now)
                   }}
-                  onContextMenu={(e) => openFolderMenu(e, path)}
-                  className={`group relative select-none flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed transition-all cursor-pointer hover:-translate-y-1 hover:shadow-lift user-select-none ${
+                  className={`group relative select-none flex flex-col items-center justify-center p-5 min-h-[180px] rounded-2xl border transition-all cursor-pointer hover:-translate-y-1 hover:shadow-lift user-select-none ${
                     fc ? `${fc.border} ${fc.bg}` : 'border-ember-200 dark:border-ember-500/30 bg-ember-50/40 dark:bg-ember-500/5 hover:bg-ember-50 dark:hover:bg-ember-500/10'
                   } ${
                     dragFolderPath === path ? 'opacity-40' : ''
                   } ${
                     dragOverFolder === path ? 'ring-2 ring-ember-400' : ''
+                  } ${
+                    selected.has(path) ? 'ring-2 ring-ember-400 bg-ember-50/80 dark:bg-ember-500/15' : ''
                   }`}
                 >
                   <FolderOpen className={`w-10 h-10 mb-2 ${fc ? fc.text : 'text-ember-500'}`} />
@@ -828,10 +915,13 @@ const LibraryPage: React.FC = () => {
                   }}
                   onDragEndCapture={() => { setDragSessionId(null); setDragOverFolder(undefined) }}
                   onContextMenu={(e) => openSessionMenu(e, s)}
-                  className={`relative group select-none rounded-2xl shadow-soft border p-5 flex flex-col cursor-grab active:cursor-grabbing transition-all hover:-translate-y-1 hover:shadow-lift user-select-none ${
+                  onClick={(e) => toggleSelect(s.id, e)}
+                  className={`relative group select-none rounded-2xl shadow-soft border p-5 min-h-[180px] flex flex-col cursor-grab active:cursor-grabbing transition-all hover:-translate-y-1 hover:shadow-lift user-select-none ${
                     sc ? `${sc.bg} ${sc.border}` : 'bg-paper-raised dark:bg-sepia-900 border-slate-100 dark:border-sepia-800'
                   } ${
                     dragSessionId === s.id ? 'opacity-40' : ''
+                  } ${
+                    selected.has(s.id) ? 'ring-2 ring-ember-400' : ''
                   }`}
                 >
                   {sc && <span className={`absolute top-0 left-0 h-full w-1.5 rounded-l-2xl ${sc.swatch}`} />}
@@ -960,21 +1050,51 @@ const LibraryPage: React.FC = () => {
         style={{ opacity: 0 }}
       />
 
+      {/* Selection toolbar (point 1 & 2): shown when >=1 item is selected.
+          Delete (Supr) and Esc (clear) are also keyboard-driven. */}
+      {selected.size > 0 && (
+        <div className="sticky top-2 z-30 mx-auto max-w-6xl mb-4 flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-ember-500 text-paper shadow-lift">
+          <span className="text-sm font-semibold">
+            {selected.size} {t('library.selected')}
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setFolderToDelete('__multi__')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-sm font-semibold transition-colors"
+            >
+              <Trash2 className="w-4 h-4" /> {t('library.delete')} <span className="opacity-80">(Supr)</span>
+            </button>
+            <button
+              onClick={clearSelection}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-medium transition-colors"
+            >
+              <X className="w-4 h-4" /> {t('config.cancel')} <span className="opacity-80">(Esc)</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Custom confirm dialogs (replace the browser's native popup) */}
       {/* Step 1: delete the folder. Contents stay in place, OR the user can pick
           the secondary action to also delete everything inside (step 2). */}
       <ConfirmDialog
         open={folderToDelete !== null}
         title={t('library.delete')}
-        message={t('library.confirm.delete.folder.plain')}
-        secondaryLabel={folderToDelete && sessions.some((s) => inSubtree(s.folder || '', folderToDelete)) ? t('library.delete.withcontents') : undefined}
+        message={folderToDelete === '__multi__'
+          ? t('library.confirm.delete.multi', { count: selected.size })
+          : t('library.confirm.delete.folder.plain')}
+        secondaryLabel={folderToDelete && folderToDelete !== '__multi__' && sessions.some((s) => inSubtree(s.folder || '', folderToDelete)) ? t('library.delete.withcontents') : undefined}
         onSecondary={() => {
           const path = folderToDelete
           setFolderToDelete(null)
           setFolderContentsToDelete(path)
         }}
         onConfirm={() => {
-          if (folderToDelete) deleteFolder(folderToDelete, false)
+          if (folderToDelete === '__multi__') {
+            deleteSelected()
+          } else if (folderToDelete) {
+            deleteFolder(folderToDelete, false)
+          }
           setFolderToDelete(null)
         }}
         onCancel={() => setFolderToDelete(null)}
@@ -1041,7 +1161,7 @@ const DeckFeedback: React.FC<{ deck: StudySession; t: (k: any, v?: any) => strin
     <div className="mt-2 pl-4">
       <div className="flex items-center justify-between text-xs text-ink-muted dark:text-sepia-300 mb-1">
         <span>{st.studied}/{st.total} {t('library.cards').toLowerCase()}</span>
-        <span className={st.acc >= 70 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-ember-600 dark:text-ember-400 font-semibold'}>{st.acc}%</span>
+        <span className={st.acc >= 70 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-ember-600 dark:text-ember-400 font-semibold'}>{st.acc}% {t('library.accuracy')}</span>
       </div>
       <div className="h-2 rounded-full bg-slate-100 dark:bg-sepia-800 overflow-hidden">
         <div className={`h-full rounded-full ${barColor}`} style={{ width: `${st.pct}%` }} />
